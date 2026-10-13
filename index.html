@@ -72,6 +72,9 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 
 .task{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
 .task.is-late{border-left:3px solid var(--late)}
+.task.st-doing{background:var(--doing-bg);border-color:var(--doing)}
+.task.st-done{background:var(--done-bg);border-color:var(--done)}
+.task.st-doing .seg,.task.st-done .seg{background:rgba(0,0,0,.35);border-color:transparent}
 .task .main{min-width:0;display:flex;flex-direction:column;gap:3px}
 .task .title{overflow-wrap:anywhere;cursor:text}
 .task.st-done .title{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
