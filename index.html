@@ -84,10 +84,13 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 .tag.late{background:var(--late-bg);color:var(--late)}
 .title-edit{width:100%;border:1px solid var(--accent);border-radius:6px;padding:4px 6px;background:var(--surface)}
 .task.has-move{grid-template-columns:auto 1fr auto}
-.move{display:flex;flex-direction:column;gap:2px;align-self:center}
-.mvbtn{width:28px;height:22px;border:1px solid var(--line);background:rgba(0,0,0,.35);border-radius:6px;font-size:10px;color:var(--muted);padding:0;line-height:1}
-.mvbtn:hover:not(:disabled){color:var(--ink);border-color:var(--muted)}
-.mvbtn:disabled{opacity:.3;cursor:default}
+.grip{align-self:stretch;width:22px;border:0;background:transparent;color:var(--muted);cursor:grab;font-size:15px;letter-spacing:-3px;padding:0;touch-action:none;border-radius:6px}
+.grip:hover{color:var(--ink);background:rgba(255,255,255,.04)}
+.task[data-list]{cursor:grab}
+.task[data-list] button,.task[data-list] input,.task[data-list] textarea,.task[data-list] .title{cursor:pointer}
+.task[data-list] .title{cursor:text}
+.task.dragging{position:relative;z-index:5;cursor:grabbing;box-shadow:0 10px 28px rgba(0,0,0,.6);opacity:.96}
+body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .note{font-size:13px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;border-left:2px solid var(--line);padding-left:8px;margin-top:2px}
 .mini.has-note{color:var(--accent)}
 .note-box{grid-column:1/-1;display:flex;gap:8px;align-items:flex-end;padding-top:6px;border-top:1px dashed var(--line)}
@@ -343,16 +346,13 @@ function taskHTML(t,ctx,idx,len){
       <button class="mini" data-act="ppclose" data-id="${t.id}">Renunță</button>
     </div>`:"";
   const movable=ctx==="late"||ctx==="day";
-  const mv=movable?`<span class="move">
-      <button class="mvbtn" data-act="mv" data-dir="-1" data-list="${ctx}" data-id="${t.id}" aria-label="Mută mai sus" ${idx===0?"disabled":""}>▲</button>
-      <button class="mvbtn" data-act="mv" data-dir="1" data-list="${ctx}" data-id="${t.id}" aria-label="Mută mai jos" ${idx===len-1?"disabled":""}>▼</button>
-    </span>`:"";
+  const mv=movable?`<button class="grip" data-grip="${t.id}" data-list="${ctx}" aria-label="Trage pentru a muta. Cu tastatura: săgeți sus/jos" title="Trage pentru a muta">⋮⋮</button>`:"";
   const noteView=t.note&&openNote!==t.id?`<div class="note">${esc(t.note)}</div>`:"";
   const noteEdit=openNote===t.id?`<div class="note-box">
       <textarea id="note-${t.id}" data-note="${t.id}" rows="3" placeholder="Observații: detalii, cu cine ai vorbit, ce aștepți…">${esc(t.note||"")}</textarea>
       <button class="ghost" data-act="noteclose" data-id="${t.id}">Gata</button>
     </div>`:"";
-  return `<li class="task st-${t.status} ${ctx==="late"?"is-late":""} ${movable?"has-move":""}">
+  return `<li class="task st-${t.status} ${ctx==="late"?"is-late":""} ${movable?"has-move":""}" ${movable?`data-list="${ctx}" data-id="${t.id}"`:""}>
     ${mv}
     <div class="main">${title}${meta?`<div class="meta">${meta}</div>`:""}${noteView}</div>
     <div class="actions">${seg}
@@ -365,6 +365,7 @@ function sec(el,title,count,inner,emptyText){
   el.innerHTML=`<div class="sec-head"><h2>${title}</h2><span class="count">${count}</span></div>`+(inner||`<div class="empty">${emptyText}</div>`);
 }
 function render(){
+  if(drag&&drag.on)return;
   const isToday=view===today();
   $("eyebrow").textContent=isToday?"Ședința de dimineață · azi":(view<today()?"Istoric":"Planificare");
   $("dayTitle").textContent=longDate(view).replace(/^./,c=>c.toUpperCase());
@@ -448,7 +449,6 @@ document.addEventListener("click",e=>{
   switch(act){
     case "st": if(t){setStatus(t,b.dataset.s);commit()}break;
     case "edit": editing=id;render();break;
-    case "mv": if(move(id,b.dataset.list,+b.dataset.dir)){commit();const nb=document.querySelector(`[data-act="mv"][data-id="${id}"][data-dir="${b.dataset.dir}"]`);if(nb&&!nb.disabled)nb.focus()}break;
     case "note": openNote=openNote===id?null:id;openPostpone=null;render();if(openNote){const ta=$("note-"+id);if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)}}break;
     case "noteclose": openNote=null;persist();render();break;
     case "ppopen": openPostpone=openPostpone===id?null:id;render();break;
@@ -504,6 +504,57 @@ $("tabDay").onclick=()=>{tab="day";render()};
 $("tabRec").onclick=()=>{tab="rec";render()};
 $("summaryBtn").onclick=()=>{const box=$("summaryBox");box.hidden=!box.hidden;if(!box.hidden)renderSummary()};
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){if(genRecurring(today()))persist();render()}});
+
+/* ---------- tragere cu mouse-ul / degetul ---------- */
+let drag=null,suppressClick=false;
+document.addEventListener("pointerdown",e=>{
+  if(e.button!==0)return;
+  const li=e.target.closest("li.task[data-list]");if(!li||editing||openNote)return;
+  const onGrip=!!e.target.closest(".grip");
+  if(!onGrip&&(e.pointerType!=="mouse"||e.target.closest("button,input,textarea,label,select,a")))return;
+  drag={li,ul:li.parentElement,id:li.dataset.id,list:li.dataset.list,startY:e.clientY,y:e.clientY,on:false,pid:e.pointerId};
+});
+function dragStep(){
+  const {li,ul}=drag;const gap=parseFloat(getComputedStyle(ul).rowGap)||6;
+  let moved=true;
+  while(moved){moved=false;
+    const prev=li.previousElementSibling,next=li.nextElementSibling;
+    if(prev){const r=prev.getBoundingClientRect();if(drag.y<r.top+r.height/2){ul.insertBefore(li,prev);drag.startY-=r.height+gap;moved=true;continue}}
+    if(next){const r=next.getBoundingClientRect();if(drag.y>r.top+r.height/2){ul.insertBefore(next,li);drag.startY+=r.height+gap;moved=true}}
+  }
+  li.style.transform=`translateY(${drag.y-drag.startY}px)`;
+}
+document.addEventListener("pointermove",e=>{
+  if(!drag||e.pointerId!==drag.pid)return;
+  drag.y=e.clientY;
+  if(!drag.on){if(Math.abs(drag.y-drag.startY)<6)return;
+    drag.on=true;drag.li.classList.add("dragging");document.body.classList.add("is-dragging");
+    try{drag.li.setPointerCapture(e.pointerId)}catch(err){}}
+  e.preventDefault();
+  const edge=70,h=innerHeight;let sc=0;
+  if(drag.y<edge)sc=-Math.ceil((edge-drag.y)/6);else if(drag.y>h-edge)sc=Math.ceil((drag.y-(h-edge))/6);
+  if(sc){const before=scrollY;scrollBy(0,sc);drag.startY-=scrollY-before}
+  dragStep();
+},{passive:false});
+function endDrag(e){
+  if(!drag||(e&&e.pointerId!==drag.pid))return;
+  const d=drag;drag=null;
+  if(!d.on)return;
+  document.body.classList.remove("is-dragging");d.li.classList.remove("dragging");d.li.style.transform="";
+  suppressClick=true;setTimeout(()=>suppressClick=false,0);
+  const ids=[...d.ul.querySelectorAll(":scope > li.task[data-id]")].map(x=>x.dataset.id);
+  let changed=false;
+  ids.forEach((id,k)=>{const t=find(id);if(t&&t.ord!==k+1){t.ord=k+1;changed=true}});
+  if(changed)commit();else render();
+}
+document.addEventListener("pointerup",endDrag);
+document.addEventListener("pointercancel",endDrag);
+document.addEventListener("click",e=>{if(suppressClick){e.stopPropagation();e.preventDefault();suppressClick=false}},true);
+document.addEventListener("keydown",e=>{
+  const g=e.target.closest&&e.target.closest(".grip");if(!g||(e.key!=="ArrowUp"&&e.key!=="ArrowDown"))return;
+  e.preventDefault();const id=g.dataset.grip;
+  if(move(id,g.dataset.list,e.key==="ArrowUp"?-1:1)){commit();const ng=document.querySelector(`.grip[data-grip="${id}"]`);if(ng)ng.focus()}
+});
 
 function setPalette(p){
   if(!["cupru","padure","noapte"].includes(p))p="cupru";
