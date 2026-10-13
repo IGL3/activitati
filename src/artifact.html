@@ -87,6 +87,9 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .note{font-size:13px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;border-left:2px solid var(--line);padding-left:8px;margin-top:2px}
 .mini.has-note{color:var(--accent)}
+.pinbtn{display:inline-flex;align-items:center;gap:4px}
+.pinbtn.on{color:var(--accent)}
+.pin-flag{display:inline-flex;align-items:center;gap:4px;font-family:var(--f-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)}
 .note-box{grid-column:1/-1;display:flex;gap:8px;align-items:flex-end;padding-top:6px;border-top:1px dashed var(--line)}
 .note-box textarea{flex:1;min-width:0;resize:vertical;border:1px solid var(--accent);border-radius:8px;padding:8px 10px;background:var(--surface);font:inherit;font-size:14px;color:var(--ink)}
 
@@ -302,12 +305,12 @@ function dayLists(d){
 }
 /* ordinea o stabilești tu: câmpul ord; activitățile fără ord rămân în ordinea adăugării */
 const ordOf=t=>typeof t.ord==="number"?t.ord:(t.createdAt||0)/1e13;
-function sortOrd(a){return a.sort((x,y)=>(ordOf(x)-ordOf(y))||((x.createdAt||0)-(y.createdAt||0)))}
+function sortOrd(a){return a.sort((x,y)=>((y.pinned?1:0)-(x.pinned?1:0))||(ordOf(x)-ordOf(y))||((x.createdAt||0)-(y.createdAt||0)))}
 function nextOrd(){return state.tasks.reduce((m,t)=>Math.max(m,ordOf(t)),0)+1}
 function move(id,list,dir){
   const lists=dayLists(view);const arr=lists[list];if(!arr)return false;
   const i=arr.findIndex(t=>t.id===id),j=i+dir;
-  if(i<0||j<0||j>=arr.length)return false;
+  if(i<0||j<0||j>=arr.length||!!arr[i].pinned!==!!arr[j].pinned)return false;
   arr.forEach((t,k)=>t.ord=k+1);
   arr[i].ord=j+1;arr[j].ord=i+1;
   return true;
@@ -344,10 +347,11 @@ function taskHTML(t,ctx,idx,len){
       <textarea id="note-${t.id}" data-note="${t.id}" rows="3" placeholder="Observații: detalii, cu cine ai vorbit, ce aștepți…">${esc(t.note||"")}</textarea>
       <button class="ghost" data-act="noteclose" data-id="${t.id}">Gata</button>
     </div>`:"";
-  return `<li class="task st-${t.status} ${ctx==="late"?"is-late":""} ${movable?"has-move":""}" ${movable?`data-list="${ctx}" data-id="${t.id}"`:""}>
+  return `<li class="task st-${t.status} ${ctx==="late"?"is-late":""} ${movable?"has-move":""}" ${movable?`data-list="${ctx}" data-id="${t.id}" data-pin="${t.pinned?1:0}"`:""}>
     ${mv}
-    <div class="main">${title}${meta?`<div class="meta">${meta}</div>`:""}${noteView}</div>
+    <div class="main">${t.pinned?`<span class="pin-flag"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M16 3a1 1 0 0 1 .7 1.7L15 6.4v4.2l2.7 2.7a1 1 0 0 1-.7 1.7h-4v5.5a1 1 0 0 1-2 0V15H7a1 1 0 0 1-.7-1.7L9 10.6V6.4L7.3 4.7A1 1 0 0 1 8 3h8z"/></svg>Fixată sus</span>`:""}${title}${meta?`<div class="meta">${meta}</div>`:""}${noteView}</div>
     <div class="actions">${seg}
+      ${ctx!=="later"?`<button class="mini pinbtn ${t.pinned?"on":""}" data-act="pin" data-id="${t.id}" aria-pressed="${!!t.pinned}" title="${t.pinned?"Anulează fixarea":"Fixează sus"}"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M16 3a1 1 0 0 1 .7 1.7L15 6.4v4.2l2.7 2.7a1 1 0 0 1-.7 1.7h-4v5.5a1 1 0 0 1-2 0V15H7a1 1 0 0 1-.7-1.7L9 10.6V6.4L7.3 4.7A1 1 0 0 1 8 3h8z"/></svg>${t.pinned?"Fixată":"Fixează"}</button>`:""}
       <button class="mini ${t.note?"has-note":""}" data-act="note" data-id="${t.id}">${t.note?"Observații •":"Observații"}</button>
       ${t.status!=="done"&&ctx!=="later"?`<button class="mini" data-act="ppopen" data-id="${t.id}">Altă dată</button>`:""}
       <button class="mini" data-act="del" data-id="${t.id}" aria-label="Șterge">Șterge</button>
@@ -441,6 +445,7 @@ document.addEventListener("click",e=>{
   switch(act){
     case "st": if(t){setStatus(t,b.dataset.s);commit()}break;
     case "edit": editing=id;render();break;
+    case "pin": if(t){if(t.pinned)delete t.pinned;else t.pinned=true;commit()}break;
     case "note": openNote=openNote===id?null:id;openPostpone=null;render();if(openNote){const ta=$("note-"+id);if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)}}break;
     case "noteclose": openNote=null;persist();render();break;
     case "ppopen": openPostpone=openPostpone===id?null:id;render();break;
@@ -511,8 +516,8 @@ function dragStep(){
   let moved=true;
   while(moved){moved=false;
     const prev=li.previousElementSibling,next=li.nextElementSibling;
-    if(prev){const r=prev.getBoundingClientRect();if(drag.y<r.top+r.height/2){ul.insertBefore(li,prev);drag.startY-=r.height+gap;moved=true;continue}}
-    if(next){const r=next.getBoundingClientRect();if(drag.y>r.top+r.height/2){ul.insertBefore(next,li);drag.startY+=r.height+gap;moved=true}}
+    if(prev&&prev.dataset.pin===li.dataset.pin){const r=prev.getBoundingClientRect();if(drag.y<r.top+r.height/2){ul.insertBefore(li,prev);drag.startY-=r.height+gap;moved=true;continue}}
+    if(next&&next.dataset.pin===li.dataset.pin){const r=next.getBoundingClientRect();if(drag.y>r.top+r.height/2){ul.insertBefore(next,li);drag.startY+=r.height+gap;moved=true}}
   }
   li.style.transform=`translateY(${drag.y-drag.startY}px)`;
 }
