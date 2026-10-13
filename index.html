@@ -72,9 +72,10 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 
 .task{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
 .task.is-late{border-left:3px solid var(--late)}
+.task.st-todo{background:var(--late-bg);border-color:var(--late)}
 .task.st-doing{background:var(--doing-bg);border-color:var(--doing)}
 .task.st-done{background:var(--done-bg);border-color:var(--done)}
-.task.st-doing .seg,.task.st-done .seg{background:rgba(0,0,0,.35);border-color:transparent}
+.task.st-todo .seg,.task.st-doing .seg,.task.st-done .seg{background:rgba(0,0,0,.35);border-color:transparent}
 .task .main{min-width:0;display:flex;flex-direction:column;gap:3px}
 .task .title{overflow-wrap:anywhere;cursor:text}
 .task.st-done .title{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
@@ -86,7 +87,7 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--soft)}
 .seg button{border:0;background:transparent;padding:5px 9px;font-size:12.5px;color:var(--muted);white-space:nowrap}
 .seg button+button{border-left:1px solid var(--line)}
-.seg button[aria-pressed="true"].s-todo{background:var(--surface);color:var(--ink);font-weight:600}
+.seg button[aria-pressed="true"].s-todo{background:var(--late-bg);color:var(--late);font-weight:600}
 .seg button[aria-pressed="true"].s-doing{background:var(--doing-bg);color:var(--doing);font-weight:600}
 .seg button[aria-pressed="true"].s-done{background:var(--done-bg);color:var(--done);font-weight:600}
 .actions{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
