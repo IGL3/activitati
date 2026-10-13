@@ -83,6 +83,15 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 .tag{font-family:var(--f-mono);font-size:11px;padding:1px 7px;border-radius:5px;background:var(--soft);color:var(--muted)}
 .tag.late{background:var(--late-bg);color:var(--late)}
 .title-edit{width:100%;border:1px solid var(--accent);border-radius:6px;padding:4px 6px;background:var(--surface)}
+.task.has-move{grid-template-columns:auto 1fr auto}
+.move{display:flex;flex-direction:column;gap:2px;align-self:center}
+.mvbtn{width:28px;height:22px;border:1px solid var(--line);background:rgba(0,0,0,.35);border-radius:6px;font-size:10px;color:var(--muted);padding:0;line-height:1}
+.mvbtn:hover:not(:disabled){color:var(--ink);border-color:var(--muted)}
+.mvbtn:disabled{opacity:.3;cursor:default}
+.note{font-size:13px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;border-left:2px solid var(--line);padding-left:8px;margin-top:2px}
+.mini.has-note{color:var(--accent)}
+.note-box{grid-column:1/-1;display:flex;gap:8px;align-items:flex-end;padding-top:6px;border-top:1px dashed var(--line)}
+.note-box textarea{flex:1;min-width:0;resize:vertical;border:1px solid var(--accent);border-radius:8px;padding:8px 10px;background:var(--surface);font:inherit;font-size:14px;color:var(--ink)}
 
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--soft)}
 .seg button{border:0;background:transparent;padding:5px 9px;font-size:12.5px;color:var(--muted);white-space:nowrap}
@@ -95,7 +104,7 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 .mini:hover{border-color:var(--line);color:var(--ink)}
 .postpone{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding-top:6px;border-top:1px dashed var(--line);font-size:13px}
 .postpone input[type=date]{border:1px solid var(--line);border-radius:7px;padding:4px 6px;background:var(--surface)}
-@media (max-width:560px){.task{grid-template-columns:1fr}.actions{justify-content:flex-start}}
+@media (max-width:560px){.task,.task.has-move{grid-template-columns:auto 1fr}.task:not(.has-move) .main{grid-column:1/-1}.actions{grid-column:1/-1;justify-content:flex-start}}
 
 .issue{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;display:flex;gap:10px;align-items:flex-start}
 .issue .txt{flex:1;min-width:0;overflow-wrap:anywhere}
@@ -212,7 +221,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"
 const $=id=>document.getElementById(id);
 
 let state={v:1,tasks:[],recurring:[],issues:[]};
-let view=today(), tab="day", openPostpone=null, editing=null, recDraft=[1,2,3,4,5];
+let view=today(), tab="day", openPostpone=null, openNote=null, editing=null, recDraft=[1,2,3,4,5];
 try{const raw=localStorage.getItem(LS);if(raw)state=normalize(JSON.parse(raw))}catch(e){}
 
 function normalize(s){
@@ -223,7 +232,7 @@ function normalize(s){
 }
 
 /* ---------- salvare: db privat per persoană, cu rezervă în browser ---------- */
-let ref=null, saveTimer=null, saving=Promise.resolve(), lastJSON=JSON.stringify(state);
+let ref=null, saveTimer=null, inflight=0, saving=Promise.resolve(), lastJSON=JSON.stringify(state);
 function setSync(t){$("sync").textContent=t}
 function persist(){
   prune();
@@ -235,8 +244,9 @@ function persist(){
   clearTimeout(saveTimer);
   setSync("Se salvează…");
   saveTimer=setTimeout(()=>{
+    saveTimer=null;inflight++;
     const body=JSON.parse(lastJSON);
-    saving=saving.then(()=>ref.set(body)).then(()=>setSync("Salvat")).catch(e=>{
+    saving=saving.then(()=>ref.set(body)).then(()=>{inflight--;setSync("Salvat")}).catch(e=>{inflight--;
       setSync(e&&e.code==="quota_exceeded"?"Spațiul de stocare e plin. Șterge activități vechi.":"Nu s-a putut salva acum. Modificările rămân în acest browser.");
     });
   },500);
@@ -257,7 +267,7 @@ async function connect(){
     ref.onSnapshot(snap=>{
       if(snap.exists){
         const json=JSON.stringify(normalize(snap.data()));
-        if(json!==lastJSON&&!snap.metadata.hasPendingWrites){
+        if(json!==lastJSON&&!snap.metadata.hasPendingWrites&&!saveTimer&&!inflight){
           state=normalize(JSON.parse(json));lastJSON=json;
           try{localStorage.setItem(LS,json)}catch(e){}
           render();
@@ -278,7 +288,7 @@ function genRecurring(day){
     if(!r.days.includes(wd))return;
     const id="r_"+r.id+"_"+day;
     if(state.tasks.some(t=>t.id===id))return;
-    state.tasks.push({id,title:r.title,date:day,status:"todo",recurId:r.id,createdAt:Date.now()});
+    state.tasks.push({id,title:r.title,date:day,status:"todo",recurId:r.id,createdAt:Date.now(),ord:nextOrd()});
     changed=true;
   });
   return changed;
@@ -293,13 +303,23 @@ function dayLists(d){
   const isToday=d===today();
   const late=isToday?state.tasks.filter(t=>t.date&&t.date<d&&(t.status==="todo"||t.status==="doing")):[];
   const day=state.tasks.filter(t=>t.status!=="later"&&(t.date===d||(t.status==="done"&&t.doneOn===d&&t.date&&t.date<d)));
-  const order={doing:0,todo:1,done:2};
-  const sort=a=>a.sort((x,y)=>(order[x.status]-order[y.status])||((x.createdAt||0)-(y.createdAt||0)));
-  return {late:sort(late).sort((a,b)=>a.date<b.date?-1:1),day:sort(day)};
+  return {late:sortOrd(late),day:sortOrd(day)};
+}
+/* ordinea o stabilești tu: câmpul ord; activitățile fără ord rămân în ordinea adăugării */
+const ordOf=t=>typeof t.ord==="number"?t.ord:(t.createdAt||0)/1e13;
+function sortOrd(a){return a.sort((x,y)=>(ordOf(x)-ordOf(y))||((x.createdAt||0)-(y.createdAt||0)))}
+function nextOrd(){return state.tasks.reduce((m,t)=>Math.max(m,ordOf(t)),0)+1}
+function move(id,list,dir){
+  const lists=dayLists(view);const arr=lists[list];if(!arr)return false;
+  const i=arr.findIndex(t=>t.id===id),j=i+dir;
+  if(i<0||j<0||j>=arr.length)return false;
+  arr.forEach((t,k)=>t.ord=k+1);
+  arr[i].ord=j+1;arr[j].ord=i+1;
+  return true;
 }
 
 /* ---------- randare ---------- */
-function taskHTML(t,ctx){
+function taskHTML(t,ctx,idx,len){
   const lateTag=ctx==="late"?`<span class="tag late">din ${shortDate(t.date)}</span>`:"";
   const fromBack=ctx==="day"&&t.date&&t.date<view?`<span class="tag">rămas din ${shortDate(t.date)}</span>`:"";
   const sched=ctx==="sched"?`<span class="tag">${shortDate(t.date)}</span>`:"";
@@ -322,12 +342,24 @@ function taskHTML(t,ctx){
       <button class="ghost" data-act="pp" data-to="" data-id="${t.id}">Fără dată</button>
       <button class="mini" data-act="ppclose" data-id="${t.id}">Renunță</button>
     </div>`:"";
-  return `<li class="task st-${t.status} ${ctx==="late"?"is-late":""}">
-    <div class="main">${title}${meta?`<div class="meta">${meta}</div>`:""}</div>
+  const movable=ctx==="late"||ctx==="day";
+  const mv=movable?`<span class="move">
+      <button class="mvbtn" data-act="mv" data-dir="-1" data-list="${ctx}" data-id="${t.id}" aria-label="Mută mai sus" ${idx===0?"disabled":""}>▲</button>
+      <button class="mvbtn" data-act="mv" data-dir="1" data-list="${ctx}" data-id="${t.id}" aria-label="Mută mai jos" ${idx===len-1?"disabled":""}>▼</button>
+    </span>`:"";
+  const noteView=t.note&&openNote!==t.id?`<div class="note">${esc(t.note)}</div>`:"";
+  const noteEdit=openNote===t.id?`<div class="note-box">
+      <textarea id="note-${t.id}" data-note="${t.id}" rows="3" placeholder="Observații: detalii, cu cine ai vorbit, ce aștepți…">${esc(t.note||"")}</textarea>
+      <button class="ghost" data-act="noteclose" data-id="${t.id}">Gata</button>
+    </div>`:"";
+  return `<li class="task st-${t.status} ${ctx==="late"?"is-late":""} ${movable?"has-move":""}">
+    ${mv}
+    <div class="main">${title}${meta?`<div class="meta">${meta}</div>`:""}${noteView}</div>
     <div class="actions">${seg}
+      <button class="mini ${t.note?"has-note":""}" data-act="note" data-id="${t.id}">${t.note?"Observații •":"Observații"}</button>
       ${t.status!=="done"&&ctx!=="later"?`<button class="mini" data-act="ppopen" data-id="${t.id}">Altă dată</button>`:""}
       <button class="mini" data-act="del" data-id="${t.id}" aria-label="Șterge">Șterge</button>
-    </div>${pp}</li>`;
+    </div>${noteEdit}${pp}</li>`;
 }
 function sec(el,title,count,inner,emptyText){
   el.innerHTML=`<div class="sec-head"><h2>${title}</h2><span class="count">${count}</span></div>`+(inner||`<div class="empty">${emptyText}</div>`);
@@ -346,10 +378,10 @@ function render(){
   $("stats").innerHTML=`<span class="stat done"><b>${c("done")}</b> gata</span><span class="stat doing"><b>${c("doing")}</b> în lucru</span><span class="stat"><b>${c("todo")}</b> de făcut</span>`+(late.length?`<span class="stat late"><b>${late.length}</b> rămase din urmă</span>`:"");
 
   $("secLate").hidden=!late.length;
-  if(late.length)sec($("secLate"),"Rămase din urmă",late.length,`<ul class="list">${late.map(t=>taskHTML(t,"late")).join("")}</ul>`);
+  if(late.length)sec($("secLate"),"Rămase din urmă",late.length,`<ul class="list">${late.map((t,i,a)=>taskHTML(t,"late",i,a.length)).join("")}</ul>`);
 
   sec($("secToday"),isToday?"Azi":"Activitățile zilei",day.length,
-    day.length?`<ul class="list">${day.map(t=>taskHTML(t,"day")).join("")}</ul>`:"",
+    day.length?`<ul class="list">${day.map((t,i,a)=>taskHTML(t,"day",i,a.length)).join("")}</ul>`:"",
     isToday?"Nimic planificat încă. Scrie mai sus ce spui la ședință, iar activitățile recurente le setezi din tab-ul Recurente.":"Nicio activitate în această zi.");
 
   const issues=state.issues.filter(i=>!i.resolved||i.resolvedOn===view);
@@ -385,8 +417,9 @@ function summaryText(){
   const d=view, prev=prevWork(d);
   const {late,day}=dayLists(d);
   const doneYesterday=state.tasks.filter(t=>t.status==="done"&&t.doneOn===prev);
-  const plan=[...late.map(t=>t.title+" (rămas din urmă"+(t.status==="doing"?", în desfășurare":"")+")"),
-              ...day.filter(t=>t.status!=="done").map(t=>t.title+(t.status==="doing"?" (în desfășurare)":""))];
+  const N=t=>t.note?" — "+t.note.replace(/\s*\n\s*/g,"; "):"";
+  const plan=[...late.map(t=>t.title+" (rămas din urmă"+(t.status==="doing"?", în desfășurare":"")+")"+N(t)),
+              ...day.filter(t=>t.status!=="done").map(t=>t.title+(t.status==="doing"?" (în desfășurare)":"")+N(t))];
   const doneToday=day.filter(t=>t.status==="done");
   const open=state.issues.filter(i=>!i.resolved);
   const L=a=>a.length?a.map(x=>"• "+x).join("\n"):"• —";
@@ -415,6 +448,9 @@ document.addEventListener("click",e=>{
   switch(act){
     case "st": if(t){setStatus(t,b.dataset.s);commit()}break;
     case "edit": editing=id;render();break;
+    case "mv": if(move(id,b.dataset.list,+b.dataset.dir)){commit();const nb=document.querySelector(`[data-act="mv"][data-id="${id}"][data-dir="${b.dataset.dir}"]`);if(nb&&!nb.disabled)nb.focus()}break;
+    case "note": openNote=openNote===id?null:id;openPostpone=null;render();if(openNote){const ta=$("note-"+id);if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)}}break;
+    case "noteclose": openNote=null;persist();render();break;
     case "ppopen": openPostpone=openPostpone===id?null:id;render();break;
     case "ppclose": openPostpone=null;render();break;
     case "pp": if(t){if(b.dataset.to){t.date=b.dataset.to;t.status="todo"}else{t.status="later";t.date=null}t.postponed=(t.postponed||0)+1;delete t.doneOn;openPostpone=null;toast(b.dataset.to?"Mutată pe "+shortDate(b.dataset.to):"Mutată la Altă dată");commit()}break;
@@ -446,12 +482,13 @@ function finishEdit(el,save){
 document.addEventListener("keydown",e=>{
   if(e.target.dataset&&e.target.dataset.edit){if(e.key==="Enter"){e.preventDefault();finishEdit(e.target,true)}else if(e.key==="Escape")finishEdit(e.target,false)}
 });
+document.addEventListener("input",e=>{const id=e.target.dataset&&e.target.dataset.note;if(!id)return;const t=find(id);if(t){const v=e.target.value.replace(/\s+$/,"");if(v)t.note=v;else delete t.note;persist()}});
 document.addEventListener("focusout",e=>{if(e.target.dataset&&e.target.dataset.edit&&editing)finishEdit(e.target,true)});
 
 document.addEventListener("submit",e=>{
   e.preventDefault();
   if(e.target.id==="addForm"){const v=$("addInput").value.trim();if(!v)return;
-    state.tasks.push({id:uid(),title:v,date:view,status:"todo",createdAt:Date.now()});$("addInput").value="";commit();$("addInput").focus()}
+    state.tasks.push({id:uid(),title:v,date:view,status:"todo",createdAt:Date.now(),ord:nextOrd()});$("addInput").value="";commit();$("addInput").focus()}
   if(e.target.id==="issForm"){const v=$("issInput").value.trim();if(!v)return;
     state.issues.push({id:uid(),text:v,date:today(),resolved:false});commit();$("issInput").focus()}
   if(e.target.id==="recForm"){const v=$("recInput").value.trim();if(!v){$("recInput").focus();return}
