@@ -9,7 +9,7 @@ Pariurile: în Claude stau în `data/users/<id>/betdata/bets` și `data/users/<i
   Sursa: `src/artifact.html` (fără doctype/html/head; începe cu `<title>`, `<link>` fonturi, `<style>`).
   Capabilități: `db` + `user` (date sincronizate între dispozitive).
 - **GitHub Pages:** `index.html` din rădăcină, generat — nu-l edita de mână.
-  Aici `window.claude` lipsește, deci datele stau în localStorage; apar butoanele de backup.
+  Aici `window.claude` lipsește; un strat Firebase (proiect `myactivity9`, logare Google, Firestore) imită `claude.use("db"/"user")` pe aceleași căi `data/users/<uid>/...`, doar pe *.github.io. Fără logare, datele stau în localStorage; butoanele de backup rămân vizibile.
 
 ## La orice modificare
 1. Editează `src/artifact.html`.
