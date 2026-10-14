@@ -1,6 +1,8 @@
 # Jurnal de ședință
 
 Tracker personal pentru ședința zilnică de dimineață (UI în limba română).
+Pagina are două taburi sus: **Activități** (jurnalul, `#app`) și **Pariuri** (jurnal de pariuri fotbal, `#btApp`, clase/id-uri cu prefix `bt`).
+Pariurile: în Claude stau în `data/users/<id>/betdata/bets` și `data/users/<id>/betsettings`; pe GitHub Pages în localStorage (`bt-bets`, `bt-settings`) și intră în backup sub cheia `pariuri`.
 
 ## Două publicări ale aceleiași pagini — țin-le mereu sincronizate
 - **Pagina Claude (artifact):** https://claude.ai/artifact/73Jxp6Lgf757zWvRpv5y66

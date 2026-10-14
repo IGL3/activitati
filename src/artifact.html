@@ -128,8 +128,95 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .toast button{border:0;background:transparent;color:var(--bg);font-weight:600;text-decoration:underline}
 .sync{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
 @media (prefers-reduced-motion:no-preference){.task,.issue{transition:border-color .15s}}
+/* Comutator între cele două aplicații + jurnalul de pariuri (prefix bt-), pe aceleași culori dark ale jurnalului */
+:root{ --cash:#7FB0E8; --cash-bg:#132235; }
+.appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:8;background:var(--bg);border-bottom:1px solid var(--line)}
+.appbar-in{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.appbar button{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:10px;padding:10px 12px;font:600 15px var(--f-body);display:flex;align-items:center;justify-content:center;gap:8px}
+.appbar button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.appbar .badge{font-family:var(--f-mono);font-size:11px;font-weight:500;padding:1px 7px;border-radius:999px;background:rgba(0,0,0,.25)}
+.appbar button[aria-selected="false"] .badge{background:var(--soft)}
+
+.bt{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:20px 120px;display:flex;flex-direction:column;gap:16px;font-variant-numeric:tabular-nums}
+.bt h2{font-family:var(--f-display);font-weight:600;font-size:18px;margin:0}
+.bt-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.bt-board{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.bt-lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.bt-big{font-family:var(--f-display);font-size:clamp(34px,9vw,44px);line-height:1;font-weight:700}
+.bt-row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.bt-delta{font-family:var(--f-display);font-size:22px;font-weight:600}
+.bt-spark{width:100%;height:64px;display:block;color:var(--muted)}
+.bt-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.bt-kpis div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.bt-kpis .v{font-family:var(--f-display);font-size:20px;font-weight:600}
+.bt .pos{color:var(--done)} .bt .neg{color:var(--late)}
+.bt-alert{border-radius:10px;padding:10px 12px;background:var(--doing-bg);border:1px solid var(--doing);font-size:14px}
+.bt-ex{border-radius:10px;padding:10px 12px;background:var(--cash-bg);font-size:14px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.bt-link{background:none;border:0;color:var(--accent);font-weight:600;padding:4px 0}
+.bt-list{display:flex;flex-direction:column;gap:10px}
+.bt-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.bt-chip{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:6px 12px;font-size:14px}
+.bt-chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.bt-group{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+
+.bt-slip{background:var(--surface);border:1px solid var(--line);border-radius:12px;display:grid;grid-template-columns:4px 1fr;overflow:hidden;text-align:left;color:inherit;padding:0;width:100%}
+.bt-slip .stripe{background:var(--muted)}
+.bt-slip.won .stripe{background:var(--done)} .bt-slip.lost .stripe{background:var(--late)} .bt-slip.pending .stripe{background:var(--doing)} .bt-slip.cashout .stripe{background:var(--cash)}
+.bt-slip .body{padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.bt-slip .l1{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.bt-slip .match{font-weight:600;font-size:16px;overflow-wrap:anywhere}
+.bt-slip .l3{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.bt-pick{font-size:14px}
+.bt-pick b{font-family:var(--f-mono);font-weight:500}
+.bt-pill{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap;background:var(--soft);color:var(--muted)}
+.bt-pill.won{background:var(--done-bg);color:var(--done)} .bt-pill.lost{background:var(--late-bg);color:var(--late)}
+.bt-pill.pending{background:var(--doing-bg);color:var(--doing)} .bt-pill.cashout{background:var(--cash-bg);color:var(--cash)}
+.bt-pl{font-family:var(--f-display);font-size:19px;font-weight:700}
+.bt-hint{font-size:14px;color:var(--muted)}
+.bt-quick{display:flex;gap:6px;margin-top:6px}
+.bt-quick button{flex:1;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:9px;padding:9px 4px;font-weight:600;font-size:14px}
+.bt-quick .w{color:var(--done)} .bt-quick .x{color:var(--late)}
+.bt-exmark{font-family:var(--f-mono);font-size:11px;color:var(--cash);text-transform:uppercase;letter-spacing:.06em}
+.bt-empty{border:1px dashed var(--line);border-radius:12px;padding:22px 16px;text-align:center;color:var(--muted)}
+
+.bt-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.bt-brk{display:flex;flex-direction:column;gap:10px}
+.bt-brow{display:grid;grid-template-columns:1fr auto;gap:3px 10px;align-items:baseline}
+.bt-brow .n{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.bt-brow .meta{font-size:12px;color:var(--muted);grid-column:1/-1}
+.bt-bar{grid-column:1/-1;height:6px;border-radius:3px;background:var(--soft);position:relative;overflow:hidden}
+.bt-bar i{position:absolute;top:0;bottom:0;border-radius:3px}
+.bt-stat2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bt-stat2 div{display:flex;flex-direction:column;gap:2px}
+.bt-stat2 .lbl{font-size:12px;color:var(--muted)}
+.bt-stat2 .v{font-family:var(--f-display);font-size:21px;font-weight:600}
+
+.bt-fab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:9;background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:15px 22px;font-weight:700;font-size:17px;box-shadow:0 6px 24px rgba(0,0,0,.6)}
+.bt-scrim{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:10}
+.bt-sheet{position:fixed;left:0;right:0;bottom:0;z-index:11;background:var(--surface);border-top:1px solid var(--line);border-radius:18px 18px 0 0;max-height:92%;overflow-y:auto;padding:14px 16px calc(18px + env(safe-area-inset-bottom,0px));max-width:760px;margin:0 auto}
+.bt-sheet form{display:flex;flex-direction:column;gap:12px}
+.bt-grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 4px}
+.bt-field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.bt-field>span{font-family:var(--f-mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.bt-field input,.bt-field textarea{font-size:16px;background:var(--soft);border:1px solid var(--line);border-radius:9px;padding:10px 12px;width:100%;min-width:0;color:var(--ink)}
+.bt-field input::placeholder,.bt-field textarea::placeholder{color:var(--muted)}
+.bt-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bt-seg{display:flex;flex-wrap:wrap;gap:6px}
+.bt-seg button{border:1px solid var(--line);background:var(--soft);color:var(--muted);border-radius:999px;padding:7px 12px;font-size:14px}
+.bt-seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.bt-warn{font-size:13px;color:var(--late);font-weight:600}
+.bt-actions{display:flex;gap:8px}
+.bt-btn{flex:1;border:0;border-radius:11px;padding:13px;font-weight:700;font-size:16px;background:var(--accent);color:var(--accent-ink)}
+.bt-btn.ghost{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.bt-btn.danger{background:var(--late-bg);color:var(--late)}
+.bt-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:14px;z-index:20}
+@media (prefers-reduced-motion:no-preference){.bt-sheet{animation:btup .22s ease-out}@keyframes btup{from{transform:translateY(30px);opacity:.6}}}
 </style>
 
+<nav class="appbar" aria-label="Secțiuni"><div class="appbar-in" role="tablist">
+  <button type="button" role="tab" id="swAct" aria-selected="true">Activități</button>
+  <button type="button" role="tab" id="swBet" aria-selected="false">Pariuri <span class="badge" id="swBetBadge" hidden></span></button>
+</div></nav>
 <div class="wrap" id="app">
   <header class="top">
     <div>
@@ -474,7 +561,8 @@ document.addEventListener("click",e=>{
       try{navigator.clipboard.writeText(txt).then(done,()=>selectSum())}catch(err){selectSum()}break}
     case "sumclose": $("summaryBox").hidden=true;break;
     case "pal": setPalette(b.dataset.p);break;
-    case "export": {const blob=new Blob([JSON.stringify(state,null,1)],{type:"application/json"});
+    case "export": {let pariuri={};try{pariuri={bets:JSON.parse(localStorage.getItem("bt-bets")||"[]"),settings:JSON.parse(localStorage.getItem("bt-settings")||"{}")}}catch(err){}
+      const blob=new Blob([JSON.stringify({...state,pariuri},null,1)],{type:"application/json"});
       const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="jurnal-sedinta-"+today()+".json";
       document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast("Backup descărcat");break}
     case "undo": if(undo){const f=undo;undo=null;$("toast").hidden=true;f()}break;
@@ -581,7 +669,8 @@ $("backup").hidden=!standalone;
 $("importFile").addEventListener("change",e=>{
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=()=>{try{const prev=state;state=normalize(JSON.parse(r.result));commit();
+  r.onload=()=>{try{const prev=state;const data=JSON.parse(r.result);state=normalize(data);commit();
+      if(data.pariuri&&Array.isArray(data.pariuri.bets)){try{localStorage.setItem("bt-bets",JSON.stringify(data.pariuri.bets));localStorage.setItem("bt-settings",JSON.stringify(data.pariuri.settings||{}))}catch(err){}document.dispatchEvent(new Event("bt-reload"))}
       toast("Backup încărcat",()=>{state=prev;commit()})}catch(err){toast("Fișierul nu e un backup valid al jurnalului")}
     e.target.value=""};
   r.readAsText(f);
@@ -590,5 +679,308 @@ $("importFile").addEventListener("change",e=>{
 if(genRecurring(today()))persist();
 render();
 connect();
+})();
+</script>
+
+<div id="btApp" hidden>
+<div class="bt">
+  <div class="bt-top">
+    <div><div class="eyebrow">Fotbal</div><h1>Jurnal pariuri</h1></div>
+    <button class="icon-btn" id="btSettingsBtn" type="button">Setări</button>
+  </div>
+  <section class="bt-board" aria-label="Rezumat pariuri">
+    <div class="bt-row">
+      <div><div class="bt-lbl">Bankroll curent</div><div class="bt-big" id="btBank">–</div></div>
+      <div style="text-align:right"><div class="bt-lbl">Profit</div><div class="bt-delta" id="btProfit">–</div></div>
+    </div>
+    <svg class="bt-spark" id="btSpark" viewBox="0 0 300 64" preserveAspectRatio="none" aria-label="Evoluția bankroll-ului"></svg>
+    <div class="bt-kpis">
+      <div><span class="bt-lbl">ROI</span><span class="v" id="btRoi">–</span></div>
+      <div><span class="bt-lbl">Câștig</span><span class="v" id="btWr">–</span></div>
+      <div><span class="bt-lbl">Cota med.</span><span class="v" id="btOdds">–</span></div>
+      <div><span class="bt-lbl">Pariuri</span><span class="v" id="btN">–</span></div>
+    </div>
+  </section>
+  <div id="btAlerts" class="bt-list"></div>
+  <div class="row" style="justify-content:space-between">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="btTabBets" aria-selected="true" type="button">Pariuri</button>
+      <button class="tab" role="tab" id="btTabStats" aria-selected="false" type="button">Statistici</button>
+    </div>
+  </div>
+  <div class="bt-chips" id="btFilters" aria-label="Perioadă"></div>
+  <section id="btViewBets" class="bt-list"></section>
+  <section id="btViewStats" class="bt-list" hidden></section>
+  <div class="sync" id="btSync"></div>
+</div>
+<button class="bt-fab" id="btFab" type="button">+ Pariu</button>
+<div class="bt-scrim" id="btScrim" hidden></div>
+<div class="bt-sheet" id="btSheet" hidden role="dialog" aria-modal="true" aria-labelledby="btSheetTitle"></div>
+<div class="bt-toast" id="btToast" hidden></div>
+</div>
+
+<script>
+/* ---------- comutator Activități / Pariuri ---------- */
+(function(){
+  const KEY="app-tab";
+  function show(which){
+    const bets=which==="pariuri";
+    document.getElementById("app").hidden=bets;
+    document.getElementById("btApp").hidden=!bets;
+    document.getElementById("swAct").setAttribute("aria-selected",!bets);
+    document.getElementById("swBet").setAttribute("aria-selected",bets);
+    try{localStorage.setItem(KEY,which)}catch(e){}
+    window.scrollTo(0,0);
+  }
+  document.getElementById("swAct").onclick=()=>show("activitati");
+  document.getElementById("swBet").onclick=()=>show("pariuri");
+  let start=location.hash==="#pariuri"?"pariuri":location.hash==="#activitati"?"activitati":null;
+  if(!start){try{start=localStorage.getItem(KEY)}catch(e){}}
+  show(start==="pariuri"?"pariuri":"activitati");
+})();
+
+/* ---------- jurnal de pariuri ---------- */
+(function(){
+const MARKETS=["1X2","Șansă dublă","GG / NG","Peste/Sub goluri","Handicap","Cornere","Cartonașe","Marcator","Pauză/Final","Bilet combinat","Altul"];
+const RES={pending:"În așteptare",won:"Câștigat",lost:"Pierdut",void:"Anulat",cashout:"Cashout"};
+const LSB="bt-bets", LSS="bt-settings";
+let bets=[], settings={bankroll:500,currency:"RON",monthlyBudget:0,maxPct:3};
+let col=null, setRef=null, period="all", tab="bets";
+const $=id=>document.getElementById(id);
+const n=v=>Number(v)||0;
+const pad=x=>String(x).padStart(2,"0");
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+const monthKey=d=>(d||"").slice(0,7);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+
+function profit(b){
+  if(b.result==="won")return n(b.stake)*(n(b.odds)-1);
+  if(b.result==="lost")return -n(b.stake);
+  if(b.result==="cashout")return n(b.cashout)-n(b.stake);
+  return 0;
+}
+const settled=b=>b.result!=="pending";
+function fmt(v,sign){const s=Math.abs(v).toLocaleString("ro-RO",{minimumFractionDigits:2,maximumFractionDigits:2});return (sign?(v>0?"+":v<0?"−":""):(v<0?"−":""))+s+" "+settings.currency}
+const pct=v=>(v>0?"+":"")+v.toLocaleString("ro-RO",{maximumFractionDigits:1})+"%";
+const sortBets=a=>a.slice().sort((x,y)=>(y.date||"").localeCompare(x.date||"")||n(y.createdAt)-n(x.createdAt));
+function inPeriod(b){
+  if(period==="month")return monthKey(b.date)===today().slice(0,7);
+  if(period==="7d")return (new Date(today())-new Date(b.date))/864e5<=7;
+  return true;
+}
+function summarize(list){
+  const s=list.filter(settled),dec=s.filter(b=>b.result!=="void");
+  const staked=dec.reduce((a,b)=>a+n(b.stake),0),p=s.reduce((a,b)=>a+profit(b),0);
+  const wins=dec.filter(b=>b.result==="won"||(b.result==="cashout"&&profit(b)>0)).length;
+  return {profit:p,staked,roi:staked?p/staked*100:0,wr:dec.length?wins/dec.length*100:0,avgOdds:dec.length?dec.reduce((a,b)=>a+n(b.odds),0)/dec.length:0,settled:s.length};
+}
+function fmtDate(d){if(!d)return"";const [y,m,dd]=d.split("-");return dd+"."+m+"."+y.slice(2)}
+
+function render(){
+  const all=sortBets(bets),view=all.filter(inPeriod),sAll=summarize(all),s=summarize(view);
+  $("btBank").textContent=fmt(n(settings.bankroll)+sAll.profit);
+  const pf=$("btProfit");pf.textContent=fmt(s.profit,true);pf.className="bt-delta "+(s.profit>0?"pos":s.profit<0?"neg":"");
+  $("btRoi").textContent=s.staked?pct(s.roi):"–";
+  $("btWr").textContent=s.settled?Math.round(s.wr)+"%":"–";
+  $("btOdds").textContent=s.avgOdds?s.avgOdds.toFixed(2):"–";
+  $("btN").textContent=view.length;
+  const pend=all.filter(b=>b.result==="pending").length;
+  const badge=$("swBetBadge");badge.textContent=pend;badge.hidden=!pend;
+  spark(all);alerts(all);filters();
+  $("btViewBets").hidden=tab!=="bets";$("btViewStats").hidden=tab!=="stats";
+  $("btTabBets").setAttribute("aria-selected",tab==="bets");$("btTabStats").setAttribute("aria-selected",tab==="stats");
+  tab==="bets"?renderBets(view):renderStats(view,s);
+}
+function spark(all){
+  let v=n(settings.bankroll);const pts=[v];all.filter(settled).slice().reverse().forEach(b=>{v+=profit(b);pts.push(v)});
+  const svg=$("btSpark");
+  if(pts.length<2){svg.innerHTML='<line x1="0" y1="32" x2="300" y2="32" stroke="currentColor" stroke-opacity=".4" stroke-dasharray="4 4"/>';return}
+  const min=Math.min(...pts),max=Math.max(...pts),r=(max-min)||1;
+  const x=i=>i/(pts.length-1)*296+2,y=p=>58-(p-min)/r*52;
+  const d=pts.map((p,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(p).toFixed(1)).join(" ");
+  const col=pts[pts.length-1]>=pts[0]?"var(--done)":"var(--late)",base=y(n(settings.bankroll));
+  svg.innerHTML=`<line x1="0" x2="300" y1="${base}" y2="${base}" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"/>
+  <path d="${d} L298 64 L2 64Z" style="fill:${col}" fill-opacity=".14"/>
+  <path d="${d}" fill="none" style="stroke:${col}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+  <circle cx="${x(pts.length-1)}" cy="${y(pts[pts.length-1])}" r="3.5" style="fill:${col}"/>`;
+}
+function alerts(all){
+  const out=[];
+  if(all.some(b=>b.example))out.push('<div class="bt-ex"><span>Pariurile marcate „Exemplu” sunt doar demonstrative.</span><button class="bt-link" type="button" id="btClearEx">Șterge exemplele</button></div>');
+  const mb=n(settings.monthlyBudget);
+  if(mb>0){
+    const spent=all.filter(b=>!b.example&&monthKey(b.date)===today().slice(0,7)&&b.result!=="void").reduce((a,b)=>a+n(b.stake),0);
+    if(spent>=mb)out.push(`<div class="bt-alert">Ai mizat ${fmt(spent)} luna asta, peste bugetul de ${fmt(mb)}.</div>`);
+    else if(spent>=mb*.8)out.push(`<div class="bt-alert">Ai folosit ${Math.round(spent/mb*100)}% din bugetul lunar (${fmt(spent)} din ${fmt(mb)}).</div>`);
+  }
+  let streak=0;for(const b of all.filter(b=>b.result==="lost"||b.result==="won")){if(b.result==="lost")streak++;else break}
+  if(streak>=4)out.push(`<div class="bt-alert">${streak} pariuri pierdute la rând. Poate e momentul pentru o pauză.</div>`);
+  $("btAlerts").innerHTML=out.join("");$("btAlerts").hidden=!out.length;
+  const ce=$("btClearEx");if(ce)ce.onclick=clearExamples;
+}
+function filters(){
+  const o=[["all","Tot"],["month","Luna asta"],["7d","Ultimele 7 zile"]];
+  $("btFilters").innerHTML=o.map(([k,l])=>`<button class="bt-chip" type="button" data-p="${k}" aria-pressed="${period===k}">${l}</button>`).join("");
+  $("btFilters").querySelectorAll("button").forEach(b=>b.onclick=()=>{period=b.dataset.p;render()});
+}
+function slip(b){
+  const p=profit(b),r=b.result;
+  const pl=r==="pending"?`<span class="bt-hint">poți câștiga ${fmt(n(b.stake)*n(b.odds))}</span>`:`<span class="bt-pl ${p>0?"pos":p<0?"neg":""}">${fmt(p,true)}</span>`;
+  return `<div><button class="bt-slip ${r}" type="button" data-bid="${b.id}"><span class="stripe"></span><span class="body">
+    <span class="l1"><span>${esc(fmtDate(b.date))}${b.comp?" · "+esc(b.comp):""}</span><span>${b.example?'<span class="bt-exmark">Exemplu</span> · ':""}${esc(b.book||"")}</span></span>
+    <span class="match">${esc(b.match||"Fără meci")}</span>
+    <span class="l3"><span class="bt-pick">${esc(b.market||"")}${b.pick?": "+esc(b.pick):""} @ <b>${n(b.odds).toFixed(2)}</b> · ${fmt(n(b.stake))}</span><span class="bt-pill ${r}">${RES[r]}</span></span>
+    <span class="l3">${pl}</span></span></button>
+    ${r==="pending"?`<div class="bt-quick"><button class="w" type="button" data-q="won" data-bid="${b.id}">✓ Câștigat</button><button class="x" type="button" data-q="lost" data-bid="${b.id}">✗ Pierdut</button><button type="button" data-q="void" data-bid="${b.id}">Anulat</button></div>`:""}</div>`;
+}
+function renderBets(view){
+  const el=$("btViewBets");
+  if(!view.length){el.innerHTML='<div class="bt-empty"><strong>Niciun pariu încă.</strong><br>Apasă „+ Pariu” ca să adaugi primul. Statisticile se calculează singure.</div>';return}
+  const pend=view.filter(b=>b.result==="pending"),done=view.filter(settled);
+  el.innerHTML=(pend.length?`<div class="bt-group">În așteptare · ${pend.length}</div>`+pend.map(slip).join(""):"")+(done.length?`<div class="bt-group">Încheiate · ${done.length}</div>`+done.map(slip).join(""):"");
+  el.querySelectorAll(".bt-slip").forEach(x=>x.onclick=()=>openSheet(bets.find(b=>b.id===x.dataset.bid)));
+  el.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>quickSettle(x.dataset.bid,x.dataset.q));
+}
+function breakdown(view,key,title){
+  const m={};view.filter(settled).forEach(b=>{const k=(b[key]||"").trim()||"Nespecificat";(m[k]=m[k]||[]).push(b)});
+  const rows=Object.entries(m).map(([k,l])=>({k,...summarize(l)})).sort((a,b)=>b.profit-a.profit);
+  if(!rows.length)return"";
+  const mx=Math.max(...rows.map(r=>Math.abs(r.profit)),1);
+  return `<div class="bt-card"><h2>${title}</h2><div class="bt-brk">${rows.map(r=>{const w=Math.abs(r.profit)/mx*50,pos=r.profit>=0;
+    return `<div class="bt-brow"><span class="n">${esc(r.k)}</span><span class="bt-pl ${pos?"pos":"neg"}" style="font-size:16px">${fmt(r.profit,true)}</span>
+    <span class="bt-bar"><i style="background:var(${pos?"--done":"--late"});${pos?`left:50%;width:${w}%`:`right:50%;width:${w}%`}"></i></span>
+    <span class="meta">${r.settled} pariuri · ROI ${r.staked?pct(r.roi):"–"} · câștig ${Math.round(r.wr)}%</span></div>`}).join("")}</div></div>`;
+}
+function renderStats(view,s){
+  const el=$("btViewStats");
+  if(!view.filter(settled).length){el.innerHTML='<div class="bt-empty">Statisticile apar după primul pariu încheiat.</div>';return}
+  let maxW=0,maxL=0,lw=0,ll=0;sortBets(view.filter(b=>b.result==="won"||b.result==="lost")).reverse().forEach(b=>{if(b.result==="won"){lw++;ll=0}else{ll++;lw=0}maxW=Math.max(maxW,lw);maxL=Math.max(maxL,ll)});
+  const best=view.filter(settled).reduce((a,b)=>!a||profit(b)>profit(a)?b:a,null);
+  const pend=view.filter(b=>b.result==="pending").reduce((a,b)=>a+n(b.stake),0);
+  el.innerHTML=`<div class="bt-card"><h2>Pe scurt</h2><div class="bt-stat2">
+    <div><span class="lbl">Total mizat</span><span class="v">${fmt(s.staked)}</span></div>
+    <div><span class="lbl">Miză medie</span><span class="v">${fmt(s.settled?s.staked/s.settled:0)}</span></div>
+    <div><span class="lbl">Cea mai lungă serie +</span><span class="v">${maxW}</span></div>
+    <div><span class="lbl">Cea mai lungă serie −</span><span class="v">${maxL}</span></div>
+    <div><span class="lbl">Bani în joc acum</span><span class="v">${fmt(pend)}</span></div>
+    <div><span class="lbl">Cel mai bun pariu</span><span class="v">${best?fmt(profit(best),true):"–"}</span></div>
+  </div></div>`+breakdown(view,"market","Pe tip de pariu")+breakdown(view,"comp","Pe competiție")+breakdown(view,"book","Pe casă de pariuri");
+}
+
+/* formular */
+const uniq=k=>[...new Set(bets.map(b=>b[k]).filter(Boolean))];
+const num=id=>n(String($(id).value).replace(",","."));
+function openSheet(b){
+  const e=b||{date:today(),market:"1X2",result:"pending",book:(sortBets(bets).find(x=>!x.example)||{}).book||""};
+  const sh=$("btSheet");
+  sh.innerHTML=`<div class="bt-grab"></div><form id="btForm" novalidate>
+    <h2 id="btSheetTitle">${b?"Editează pariul":"Pariu nou"}</h2>
+    <label class="bt-field"><span>Meci</span><input id="btfMatch" placeholder="ex. Rapid – FCSB" value="${esc(e.match||"")}" autocomplete="off"></label>
+    <div class="bt-two">
+      <label class="bt-field"><span>Data</span><input id="btfDate" type="date" value="${esc(e.date||today())}"></label>
+      <label class="bt-field"><span>Competiție</span><input id="btfComp" list="btdlComp" placeholder="SuperLiga" value="${esc(e.comp||"")}" autocomplete="off"></label>
+    </div>
+    <div class="bt-field"><span>Tip pariu</span><div class="bt-seg" id="btfMarket">${MARKETS.map(m=>`<button type="button" aria-pressed="${e.market===m}" data-v="${esc(m)}">${esc(m)}</button>`).join("")}</div></div>
+    <label class="bt-field"><span>Selecție</span><input id="btfPick" placeholder="ex. 1, GG, Peste 2.5" value="${esc(e.pick||"")}" autocomplete="off"></label>
+    <div class="bt-two">
+      <label class="bt-field"><span>Cotă</span><input id="btfOdds" inputmode="decimal" placeholder="1.85" value="${esc(e.odds||"")}"></label>
+      <label class="bt-field"><span>Miză (${esc(settings.currency)})</span><input id="btfStake" inputmode="decimal" placeholder="20" value="${esc(e.stake||"")}"></label>
+    </div>
+    <div id="btfPrev" class="bt-hint"></div>
+    <label class="bt-field"><span>Casa de pariuri</span><input id="btfBook" list="btdlBook" placeholder="Superbet, Betano…" value="${esc(e.book||"")}" autocomplete="off"></label>
+    <div class="bt-field"><span>Rezultat</span><div class="bt-seg" id="btfRes">${Object.entries(RES).map(([k,l])=>`<button type="button" aria-pressed="${e.result===k}" data-v="${k}">${l}</button>`).join("")}</div></div>
+    <label class="bt-field" id="btfCashWrap" ${e.result==="cashout"?"":"hidden"}><span>Sumă primită la cashout</span><input id="btfCash" inputmode="decimal" value="${esc(e.cashout||"")}"></label>
+    <label class="bt-field"><span>Notă (de ce ai pariat)</span><textarea id="btfNote" rows="2">${esc(e.note||"")}</textarea></label>
+    <div id="btfErr" class="bt-warn" hidden></div>
+    <div class="bt-actions"><button class="bt-btn ghost" type="button" id="btfCancel">Renunță</button><button class="bt-btn" type="submit">${b?"Salvează":"Adaugă pariul"}</button></div>
+    ${b?'<button class="bt-btn danger" type="button" id="btfDel">Șterge pariul</button>':""}
+  </form>
+  <datalist id="btdlComp">${uniq("comp").map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
+  <datalist id="btdlBook">${uniq("book").map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`;
+  const st={market:e.market,result:e.result};
+  const seg=(id,key,cb)=>$(id).querySelectorAll("button").forEach(x=>x.onclick=()=>{st[key]=x.dataset.v;$(id).querySelectorAll("button").forEach(y=>y.setAttribute("aria-pressed",y===x));cb&&cb()});
+  seg("btfMarket","market");seg("btfRes","result",()=>{$("btfCashWrap").hidden=st.result!=="cashout"});
+  function prev(){
+    const o=num("btfOdds"),s=num("btfStake"),bank=n(settings.bankroll)+summarize(bets).profit,lim=bank*n(settings.maxPct)/100;
+    let t=o&&s?`Câștig potențial: <b>${fmt(o*s)}</b> (profit ${fmt(s*(o-1),true)})`:"";
+    if(s&&lim>0&&s>lim)t+=`<div class="bt-warn">Miza depășește ${settings.maxPct}% din bankroll (${fmt(lim)}).</div>`;
+    $("btfPrev").innerHTML=t;
+  }
+  ["btfOdds","btfStake"].forEach(i=>$(i).addEventListener("input",prev));prev();
+  $("btfCancel").onclick=closeSheet;
+  if(b)$("btfDel").onclick=async()=>{const x=$("btfDel");if(x.dataset.c){await removeBet(b.id);closeSheet();toast("Pariu șters")}else{x.dataset.c=1;x.textContent="Apasă din nou pentru a șterge"}};
+  $("btForm").onsubmit=async ev=>{
+    ev.preventDefault();
+    const rec={...(b||{}),match:$("btfMatch").value.trim(),date:$("btfDate").value||today(),comp:$("btfComp").value.trim(),market:st.market,pick:$("btfPick").value.trim(),
+      odds:num("btfOdds"),stake:num("btfStake"),book:$("btfBook").value.trim(),result:st.result,cashout:st.result==="cashout"?num("btfCash"):0,note:$("btfNote").value.trim()};
+    const err=!rec.match?"Scrie meciul.":rec.odds<1.01?"Cota trebuie să fie cel puțin 1.01.":rec.stake<=0?"Introdu miza.":"";
+    if(err){$("btfErr").textContent=err;$("btfErr").hidden=false;return}
+    if(!b){rec.id="b"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);rec.createdAt=Date.now()}
+    delete rec.example;
+    await saveBet(rec);closeSheet();toast(b?"Pariu actualizat":"Pariu adăugat");
+  };
+  $("btScrim").hidden=false;sh.hidden=false;if(!b)setTimeout(()=>$("btfMatch").focus(),50);
+}
+function closeSheet(){$("btSheet").hidden=true;$("btScrim").hidden=true;$("btSheet").innerHTML=""}
+function openSettings(){
+  const sh=$("btSheet");
+  sh.innerHTML=`<div class="bt-grab"></div><form id="btSet" novalidate>
+    <h2 id="btSheetTitle">Setări pariuri</h2>
+    <div class="bt-two">
+      <label class="bt-field"><span>Bankroll inițial</span><input id="btsBank" inputmode="decimal" value="${esc(settings.bankroll)}"></label>
+      <label class="bt-field"><span>Monedă</span><input id="btsCur" value="${esc(settings.currency)}" maxlength="5"></label>
+    </div>
+    <div class="bt-two">
+      <label class="bt-field"><span>Buget lunar</span><input id="btsMb" inputmode="decimal" placeholder="0 = fără" value="${esc(settings.monthlyBudget||"")}"></label>
+      <label class="bt-field"><span>Miză max (% bankroll)</span><input id="btsPct" inputmode="decimal" value="${esc(settings.maxPct||"")}"></label>
+    </div>
+    <p class="bt-hint">Bugetul lunar și miza maximă te avertizează când le depășești. Lasă 0 ca să le oprești.</p>
+    <div class="bt-actions"><button class="bt-btn ghost" type="button" id="btsCancel">Renunță</button><button class="bt-btn" type="submit">Salvează</button></div>
+  </form>`;
+  $("btsCancel").onclick=closeSheet;
+  $("btSet").onsubmit=async ev=>{ev.preventDefault();settings={bankroll:num("btsBank"),currency:$("btsCur").value.trim()||"RON",monthlyBudget:num("btsMb"),maxPct:num("btsPct")};
+    lsSet(LSS,settings);render();closeSheet();toast("Setări salvate");
+    if(setRef){try{await setRef.set({...settings})}catch(e){toast("Nu am putut salva setările online.")}}};
+  $("btScrim").hidden=false;sh.hidden=false;
+}
+
+/* salvare: privat, în contul tău, cu rezervă în browser */
+async function saveBet(rec){
+  const i=bets.findIndex(b=>b.id===rec.id);i>=0?bets[i]=rec:bets.push(rec);lsSet(LSB,bets);render();
+  if(col){try{const {id,...body}=rec;await col.doc(rec.id).set(body)}catch(e){toast("Nu am putut salva online. Rămâne în acest browser.")}}
+}
+async function removeBet(id){
+  bets=bets.filter(b=>b.id!==id);lsSet(LSB,bets);render();
+  if(col){try{await col.doc(id).delete()}catch(e){toast("Nu am putut șterge online.")}}
+}
+async function quickSettle(id,r){const b=bets.find(x=>x.id===id);if(b){await saveBet({...b,result:r});toast(RES[r])}}
+async function clearExamples(){for(const b of bets.filter(b=>b.example))await removeBet(b.id);toast("Exemple șterse")}
+let tt=null;function toast(t){const el=$("btToast");el.textContent=t;el.hidden=false;clearTimeout(tt);tt=setTimeout(()=>el.hidden=true,1800)}
+
+$("btFab").onclick=()=>openSheet(null);
+$("btScrim").onclick=closeSheet;
+$("btSettingsBtn").onclick=openSettings;
+$("btTabBets").onclick=()=>{tab="bets";render()};
+$("btTabStats").onclick=()=>{tab="stats";render()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("btSheet").hidden)closeSheet()});
+
+bets=lsGet(LSB,[]);settings={...settings,...lsGet(LSS,{})};
+render();
+document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...settings,...lsGet(LSS,{})};render()});
+(async()=>{
+  if(!window.claude||!window.claude.use){$("btSync").textContent="Salvat în acest browser";return}
+  try{
+    const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
+    const uidv=user?await user.id():null;
+    if(!db||!uidv){$("btSync").textContent="Salvat în acest browser";return}
+    col=db.collection("data/users/"+uidv+"/betdata/bets");
+    setRef=db.doc("data/users/"+uidv+"/betsettings");
+    col.onSnapshot(s=>{bets=s.docs.map(d=>({id:d.id,...d.data()}));lsSet(LSB,bets);render();$("btSync").textContent="Sincronizat pe toate dispozitivele tale"},
+      ()=>{$("btSync").textContent="Sincronizarea s-a oprit. Reîncarcă pagina."});
+    setRef.onSnapshot(s=>{if(s.exists){settings={...settings,...s.data()};lsSet(LSS,settings);render()}});
+  }catch(e){$("btSync").textContent="Salvat în acest browser"}
+})();
 })();
 </script>
