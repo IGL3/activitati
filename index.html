@@ -18,8 +18,9 @@
   --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
-/* Pădure: salvie */
-:root[data-palette="padure"]{ --accent:#6CCBB3; --accent-ink:#0A1A16; }
+/* Roșu (implicit): roșu aprins pe negru, cu o tentă vișinie sus */
+:root[data-palette="rosu"]{ --accent:#E5132E; --accent-ink:#FFFFFF; }
+:root[data-palette="rosu"] .appbar{background:linear-gradient(180deg,#3B0509 0%,#1A0204 70%,var(--bg) 100%);border-bottom-color:#3B0509}
 /* Noapte: lavandă */
 :root[data-palette="noapte"]{ --accent:#B6A2FF; --accent-ink:#17112E; }
 *{box-sizing:border-box}
@@ -149,9 +150,10 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .bt-top .icon-btn{white-space:nowrap}
 .bt-board{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
 .bt-lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.bt-big{font-family:var(--f-display);font-size:clamp(34px,9vw,44px);line-height:1;font-weight:700}
+.bt-big{font-family:var(--f-display);font-size:clamp(28px,7.5vw,44px);line-height:1;font-weight:700}
 .bt-row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
-.bt-delta{font-family:var(--f-display);font-size:22px;font-weight:600}
+.bt-delta{font-family:var(--f-display);font-size:clamp(18px,5vw,22px);font-weight:600}
+.bt-row>div:last-child{margin-left:auto;text-align:right}
 .bt-spark{width:100%;height:64px;display:block;color:var(--muted)}
 .bt-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;border-top:1px solid var(--line);padding-top:12px}
 .bt-kpis div{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -337,7 +339,7 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
     <div class="swatches" role="group" aria-label="Culori">
       <span class="hint">Culori:</span>
       <button class="sw" data-act="pal" data-p="cupru" aria-label="Cupru pe grafit"><span style="background:linear-gradient(135deg,#000 50%,#E0915E 50%)"></span></button>
-      <button class="sw" data-act="pal" data-p="padure" aria-label="Pădure"><span style="background:linear-gradient(135deg,#000 50%,#6CCBB3 50%)"></span></button>
+      <button class="sw" data-act="pal" data-p="rosu" aria-label="Roșu"><span style="background:linear-gradient(135deg,#000 50%,#E5132E 50%)"></span></button>
       <button class="sw" data-act="pal" data-p="noapte" aria-label="Noapte"><span style="background:linear-gradient(135deg,#000 50%,#B6A2FF 50%)"></span></button>
     </div>
     <div class="backup" id="backup" hidden>
@@ -721,12 +723,13 @@ document.addEventListener("keydown",e=>{
 });
 
 function setPalette(p){
-  if(!["cupru","padure","noapte"].includes(p))p="cupru";
+  if(p==="padure")p="rosu"; /* verdele a fost scos */
+  if(!["cupru","rosu","noapte"].includes(p))p="rosu";
   if(p==="cupru")document.documentElement.removeAttribute("data-palette");else document.documentElement.setAttribute("data-palette",p);
   document.querySelectorAll(".sw").forEach(s=>s.setAttribute("aria-pressed",s.dataset.p===p));
   try{localStorage.setItem(LS+"-paleta",p)}catch(e){}
 }
-let savedPal="cupru";try{savedPal=localStorage.getItem(LS+"-paleta")||"cupru"}catch(e){}
+let savedPal="rosu";try{savedPal=localStorage.getItem(LS+"-paleta")||"rosu"}catch(e){}
 setPalette(savedPal);
 
 /* backup: vizibil doar când pagina rulează în afara Claude (ex. GitHub Pages) */
@@ -756,9 +759,10 @@ connect();
   </div>
   <section class="bt-board" aria-label="Rezumat pariuri">
     <div class="bt-row">
-      <div><div class="bt-lbl">Bankroll curent</div><div class="bt-big" id="btBank">–</div><div class="bt-hint" id="btInPlay" hidden></div></div>
+      <div><div class="bt-lbl">Bankroll curent</div><div class="bt-big" id="btBank">–</div></div>
       <div style="text-align:right"><div class="bt-lbl">Profit</div><div class="bt-delta" id="btProfit">–</div></div>
     </div>
+    <div class="bt-hint" id="btInPlay" hidden></div>
     <svg class="bt-spark" id="btSpark" viewBox="0 0 300 64" preserveAspectRatio="none" aria-label="Evoluția bankroll-ului"></svg>
     <div class="bt-kpis">
       <div><span class="bt-lbl">ROI</span><span class="v" id="btRoi">–</span></div>
