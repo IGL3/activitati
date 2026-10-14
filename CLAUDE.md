@@ -4,6 +4,13 @@ Tracker personal pentru ședința zilnică de dimineață (UI în limba română
 Pagina are două taburi sus: **Activități** (jurnalul, `#app`) și **Pariuri** (jurnal de pariuri fotbal, `#btApp`, clase/id-uri cu prefix `bt`).
 Pariurile: în Claude stau în `data/users/<id>/betdata/bets` și `data/users/<id>/betsettings`; pe GitHub Pages în localStorage (`bt-bets`, `bt-settings`) și intră în backup sub cheia `pariuri`.
 
+## Lipește bilet (tab Pariuri)
+Utilizatorul trimite poza biletului în chat; răspunde cu UN bloc JSON pe care îl lipește în „Lipește bilet”.
+Câmpuri (română sau engleză): `meci`/`match`, `data`/`date` (YYYY-MM-DD), `competitie`/`comp`, `tip`/`market`
+(1X2, Șansă dublă, GG / NG, Peste/Sub goluri, Handicap, Cornere, Cartonașe, Marcator, Pauză/Final, Bilet combinat, Altul),
+`selectie`/`pick`, `cota`/`odds` (cota totală), `miza`/`stake`, `casa`/`book`, `result` (pending|won|lost|void|cashout), `nota`.
+Bilet combinat: `meciuri`/`legs`: [{meci, selectie, competitie}] + cota totală → un singur pariu. Mai multe bilete: array sau `{"pariuri":[…]}`.
+
 ## Două publicări ale aceleiași pagini — țin-le mereu sincronizate
 - **Pagina Claude (artifact):** https://claude.ai/artifact/73Jxp6Lgf757zWvRpv5y66
   Sursa: `src/artifact.html` (fără doctype/html/head; începe cu `<title>`, `<link>` fonturi, `<style>`).

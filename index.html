@@ -145,7 +145,8 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
 
 .bt{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:20px 120px;display:flex;flex-direction:column;gap:16px;font-variant-numeric:tabular-nums}
 .bt h2{font-family:var(--f-display);font-weight:600;font-size:18px;margin:0}
-.bt-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.bt-top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.bt-top .icon-btn{white-space:nowrap}
 .bt-board{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
 .bt-lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .bt-big{font-family:var(--f-display);font-size:clamp(34px,9vw,44px);line-height:1;font-weight:700}
@@ -751,7 +752,7 @@ connect();
 <div class="bt">
   <div class="bt-top">
     <div><div class="eyebrow">Fotbal</div><h1>Jurnal pariuri</h1></div>
-    <button class="icon-btn" id="btSettingsBtn" type="button">Setări</button>
+    <div class="daynav"><button class="icon-btn" id="btPasteBtn" type="button">Lipește bilet</button><button class="icon-btn" id="btSettingsBtn" type="button">Setări</button></div>
   </div>
   <section class="bt-board" aria-label="Rezumat pariuri">
     <div class="bt-row">
@@ -989,6 +990,62 @@ function openSheet(b){
   $("btScrim").hidden=false;sh.hidden=false;if(!b)setTimeout(()=>$("btfMatch").focus(),50);
 }
 function closeSheet(){$("btSheet").hidden=true;$("btScrim").hidden=true;$("btSheet").innerHTML=""}
+/* lipire bilet: textul primit de la Claude (JSON) → unul sau mai multe pariuri */
+function parseTicket(txt){
+  txt=String(txt||"").replace(/```[a-z]*|```/gi,"").trim();
+  const a=txt.search(/[\[{]/);if(a<0)throw new Error("Nu găsesc datele biletului în text.");
+  let data;try{data=JSON.parse(txt.slice(a))}catch(e){throw new Error("Textul nu e complet. Copiază tot mesajul primit și încearcă din nou.")}
+  let list=Array.isArray(data)?data:Array.isArray(data.pariuri)?data.pariuri:[data];
+  const nr=v=>typeof v==="number"?v:n(String(v??"").replace(",","."));
+  const okRes=Object.keys(RES);
+  return list.map((x,i)=>{
+    if(!x||typeof x!=="object")throw new Error("Pariul "+(i+1)+" nu e valid.");
+    const legs=Array.isArray(x.legs)?x.legs:Array.isArray(x.meciuri)?x.meciuri:null;
+    let match=String(x.match||x.meci||"").trim(),pick=String(x.pick||x.selectie||"").trim(),market=String(x.market||x.tip||"").trim(),comp=String(x.comp||x.competitie||"").trim();
+    if(legs&&legs.length){
+      const L=legs.map(l=>({m:String(l.match||l.meci||"").trim(),p:String(l.pick||l.selectie||"").trim()}));
+      if(!match)match=L.length===1?L[0].m:L.length+" meciuri: "+L.map(l=>l.m).join(", ");
+      if(!pick)pick=L.map(l=>l.p).join(" + ");
+      if(!market)market=L.length>1?"Bilet combinat":"Altul";
+      if(!comp&&L.length>1){const cs=[...new Set(legs.map(l=>l.comp||l.competitie).filter(Boolean))];comp=cs.length===1?cs[0]:(cs.length?"Mixt":"")}
+    }
+    const odds=nr(x.odds??x.cota),stake=nr(x.stake??x.miza);
+    if(!match)throw new Error("Pariul "+(i+1)+" nu are meci.");
+    if(!(odds>=1.01))throw new Error("Pariul "+(i+1)+" nu are cotă validă.");
+    if(!(stake>0))throw new Error("Pariul "+(i+1)+" nu are miză.");
+    const res=okRes.includes(x.result)?x.result:"pending";
+    const date=/^\d{4}-\d{2}-\d{2}$/.test(x.date||x.data||"")?(x.date||x.data):today();
+    return {match,date,comp,market:market||"Altul",pick,odds:Math.round(odds*100)/100,stake,book:String(x.book||x.casa||"").trim(),result:res,cashout:res==="cashout"?nr(x.cashout):0,note:String(x.note||x.nota||"").trim()};
+  });
+}
+function openPaste(){
+  const sh=$("btSheet");let parsed=[];
+  sh.innerHTML=`<div class="bt-grab"></div><form id="btPaste" novalidate>
+    <h2 id="btSheetTitle">Lipește bilet</h2>
+    <p class="bt-hint">Trimite-i lui Claude poza biletului, copiază răspunsul primit și lipește-l aici.</p>
+    <label class="bt-field"><span>Text primit</span><textarea id="btpText" rows="5" placeholder='{"meci":"Rapid – FCSB","cota":1.85,"miza":20,…}'></textarea></label>
+    <div id="btpPrev" class="bt-list"></div>
+    <div id="btpErr" class="bt-warn" hidden></div>
+    <div class="bt-actions"><button class="bt-btn ghost" type="button" id="btpCancel">Renunță</button><button class="bt-btn" type="submit" id="btpAdd" disabled>Adaugă</button></div>
+  </form>`;
+  const prev=()=>{
+    const t=$("btpText").value.trim();$("btpErr").hidden=true;parsed=[];$("btpPrev").innerHTML="";$("btpAdd").disabled=true;$("btpAdd").textContent="Adaugă";
+    if(!t)return;
+    try{parsed=parseTicket(t)}catch(e){$("btpErr").textContent=e.message;$("btpErr").hidden=false;return}
+    $("btpPrev").innerHTML=parsed.map(b=>slip({...b,id:""})).join("");
+    $("btpPrev").querySelectorAll(".bt-quick").forEach(x=>x.remove());$("btpPrev").querySelectorAll("button").forEach(x=>x.disabled=true);
+    $("btpAdd").disabled=false;$("btpAdd").textContent=parsed.length>1?`Adaugă ${parsed.length} pariuri`:"Adaugă pariul";
+  };
+  $("btpText").addEventListener("input",prev);
+  $("btpCancel").onclick=closeSheet;
+  $("btPaste").onsubmit=async ev=>{
+    ev.preventDefault();if(!parsed.length)return;
+    for(const [i,b] of parsed.entries()){await saveBet({...b,id:"b"+Date.now().toString(36)+i+Math.random().toString(36).slice(2,5),createdAt:Date.now()+i})}
+    closeSheet();toast(parsed.length>1?parsed.length+" pariuri adăugate":"Pariu adăugat");
+  };
+  $("btScrim").hidden=false;sh.hidden=false;setTimeout(()=>$("btpText").focus(),50);
+}
+
 function openSettings(){
   const sh=$("btSheet");
   sh.innerHTML=`<div class="bt-grab"></div><form id="btSet" novalidate>
@@ -1027,6 +1084,7 @@ let tt=null;function toast(t){const el=$("btToast");el.textContent=t;el.hidden=f
 $("btFab").onclick=()=>openSheet(null);
 $("btScrim").onclick=closeSheet;
 $("btSettingsBtn").onclick=openSettings;
+$("btPasteBtn").onclick=openPaste;
 $("btTabBets").onclick=()=>{tab="bets";render()};
 $("btTabStats").onclick=()=>{tab="stats";render()};
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("btSheet").hidden)closeSheet()});
