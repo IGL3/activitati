@@ -171,6 +171,7 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
       <section class="sec-late" id="secLate"></section>
       <section id="secToday"></section>
       <section id="secIssues"></section>
+      <section id="secNotes"></section>
       <section id="secLater"></section>
     </div>
   </div>
@@ -226,7 +227,7 @@ const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).sli
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=id=>document.getElementById(id);
 
-let state={v:1,tasks:[],recurring:[],issues:[]};
+let state={v:1,tasks:[],recurring:[],issues:[],notes:[]};
 let view=today(), tab="day", openPostpone=null, openNote=null, editing=null, recDraft=[1,2,3,4,5];
 try{const raw=localStorage.getItem(LS);if(raw)state=normalize(JSON.parse(raw))}catch(e){}
 
@@ -234,7 +235,7 @@ function normalize(s){
   s=s&&typeof s==="object"?s:{};
   const seen=new Set();
   const tasks=(Array.isArray(s.tasks)?s.tasks:[]).filter(t=>t&&t.id&&!seen.has(t.id)&&seen.add(t.id));
-  return {v:1,tasks,recurring:Array.isArray(s.recurring)?s.recurring:[],issues:Array.isArray(s.issues)?s.issues:[]};
+  return {v:1,tasks,recurring:Array.isArray(s.recurring)?s.recurring:[],issues:Array.isArray(s.issues)?s.issues:[],notes:Array.isArray(s.notes)?s.notes:[]};
 }
 
 /* ---------- salvare: db privat per persoană, cu rezervă în browser ---------- */
@@ -278,7 +279,7 @@ async function connect(){
           try{localStorage.setItem(LS,json)}catch(e){}
           render();
         }
-      }else if(first&&(state.tasks.length||state.recurring.length||state.issues.length)){
+      }else if(first&&(state.tasks.length||state.recurring.length||state.issues.length||state.notes.length)){
         setTimeout(()=>{lastJSON="";persist()},0);
       }
       if(first){first=false;setSync("Sincronizat pe toate dispozitivele tale");setTimeout(()=>{if(genRecurring(today()))persist();render()},0)}
@@ -398,6 +399,14 @@ function render(){
         <button class="mini" data-act="issdel" data-id="${i.id}">Șterge</button></li>`).join("")}</ul>`:`<div class="empty">Nicio problemă deschisă.</div>`}
      <form class="addrow" id="issForm"><input type="text" id="issInput" placeholder="ex. Aștept răspuns de la furnizor" autocomplete="off"><button class="ghost" type="submit">Adaugă problemă</button></form>`);
 
+  const notes=state.notes;
+  $("secNotes").hidden=!isToday&&!notes.length;
+  sec($("secNotes"),"Alte observații",notes.length,
+    `${notes.length?`<ul class="list">${notes.map(n=>`<li class="issue">
+        <span class="txt">${esc(n.text)}<div class="meta"><span class="tag">${shortDate(n.date)}</span></div></span>
+        <button class="mini" data-act="notedel" data-id="${n.id}">Șterge</button></li>`).join("")}</ul>`:`<div class="empty">Nicio observație. Notează aici ce vrei să mai spui la ședință.</div>`}
+     <form class="addrow" id="noteForm"><input type="text" id="noteInput" placeholder="ex. Mâine lipsesc după-amiază" autocomplete="off"><button class="ghost" type="submit">Adaugă observație</button></form>`);
+
   const undated=state.tasks.filter(t=>t.status==="later");
   const sched=state.tasks.filter(t=>t.status!=="done"&&t.status!=="later"&&t.date>today()).sort((a,b)=>a.date<b.date?-1:1);
   $("secLater").hidden=!isToday;
@@ -432,6 +441,7 @@ function summaryText(){
   out+=`${d===today()?"Azi":longDate(d).replace(/^./,c=>c.toUpperCase())} lucrez la:\n${L(plan)}`;
   if(doneToday.length)out+=`\n\nDeja terminat azi:\n${L(doneToday.map(t=>t.title))}`;
   out+=`\n\nProbleme / blocaje:\n${open.length?L(open.map(i=>i.text)):"• Nimic de semnalat"}`;
+  if(state.notes.length)out+=`\n\nAlte observații:\n${L(state.notes.map(n=>n.text))}`;
   return out;
 }
 function renderSummary(){
@@ -463,6 +473,7 @@ document.addEventListener("click",e=>{
     case "totoday": if(t){t.status="todo";t.date=today();commit()}break;
     case "del": if(t){const i=state.tasks.indexOf(t);state.tasks.splice(i,1);commit();toast("Activitate ștearsă",()=>{state.tasks.splice(i,0,t);commit()})}break;
     case "iss": {const x=state.issues.find(i=>i.id===id);if(x){x.resolved=!x.resolved;x.resolvedOn=x.resolved?today():null;commit()}break}
+    case "notedel": {const i=state.notes.findIndex(x=>x.id===id);if(i>-1){const x=state.notes.splice(i,1)[0];commit();toast("Observație ștearsă",()=>{state.notes.splice(i,0,x);commit()})}break}
     case "issdel": {const i=state.issues.findIndex(x=>x.id===id);if(i>-1){const x=state.issues.splice(i,1)[0];commit();toast("Problemă ștearsă",()=>{state.issues.splice(i,0,x);commit()})}break}
     case "rdraft": {const d=+b.dataset.d;recDraft=recDraft.includes(d)?recDraft.filter(x=>x!==d):[...recDraft,d];render();break}
     case "rday": {const r=state.recurring.find(x=>x.id===id),d=+b.dataset.d;if(r){r.days=r.days.includes(d)?r.days.filter(x=>x!==d):[...r.days,d];commit()}break}
@@ -494,6 +505,8 @@ document.addEventListener("submit",e=>{
   e.preventDefault();
   if(e.target.id==="addForm"){const v=$("addInput").value.trim();if(!v)return;
     state.tasks.push({id:uid(),title:v,date:view,status:"todo",createdAt:Date.now(),ord:nextOrd()});$("addInput").value="";commit();$("addInput").focus()}
+  if(e.target.id==="noteForm"){const v=$("noteInput").value.trim();if(!v)return;
+    state.notes.push({id:uid(),text:v,date:today()});commit();$("noteInput").focus()}
   if(e.target.id==="issForm"){const v=$("issInput").value.trim();if(!v)return;
     state.issues.push({id:uid(),text:v,date:today(),resolved:false});commit();$("issInput").focus()}
   if(e.target.id==="recForm"){const v=$("recInput").value.trim();if(!v){$("recInput").focus();return}
