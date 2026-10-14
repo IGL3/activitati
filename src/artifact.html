@@ -211,12 +211,62 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .bt-btn.danger{background:var(--late-bg);color:var(--late)}
 .bt-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:14px;z-index:20}
 @media (prefers-reduced-motion:no-preference){.bt-sheet{animation:btup .22s ease-out}@keyframes btup{from{transform:translateY(30px);opacity:.6}}}
+.acct{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:8px 0;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted)}
+.acct b{color:var(--ink);font-weight:500;overflow-wrap:anywhere}
+.acct button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px 12px;font-weight:500}
+.acct button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
 </style>
 
 <nav class="appbar" aria-label="Secțiuni"><div class="appbar-in" role="tablist">
   <button type="button" role="tab" id="swAct" aria-selected="true">Activități</button>
   <button type="button" role="tab" id="swBet" aria-selected="false">Pariuri <span class="badge" id="swBetBadge" hidden></span></button>
 </div></nav>
+<div class="acct" id="acct" hidden></div>
+<script>
+/* ---------- GitHub Pages: sincronizare prin Firebase ----------
+   Rulează doar pe *.github.io. Oferă aceeași interfață ca window.claude (use("db"), use("user")),
+   astfel încât jurnalul și pariurile folosesc exact aceleași căi: data/users/<uid>/... */
+(function(){
+  const FIREBASE_CONFIG=null; /* se completează cu firebaseConfig din consola Firebase */
+  if(window.claude||!/github\.io$/.test(location.hostname)||!FIREBASE_CONFIG)return;
+  const V="10.12.2",acct=document.getElementById("acct");
+  const load=src=>new Promise((ok,bad)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=bad;document.head.appendChild(s)});
+  let resolveReady;const ready=new Promise(r=>resolveReady=r);
+  window.claude={__firebase:true,use:async name=>{const ctx=await ready;if(!ctx)return null;
+    if(name==="db")return {doc:p=>ctx.fs.doc(p),collection:p=>ctx.fs.collection(p)};
+    if(name==="user")return {id:async()=>ctx.user.uid,isOwner:()=>true};
+    return null}};
+  function show(html){acct.innerHTML=html;acct.hidden=false}
+  (async()=>{
+    try{
+      await load(`https://www.gstatic.com/firebasejs/${V}/firebase-app-compat.js`);
+      await Promise.all([load(`https://www.gstatic.com/firebasejs/${V}/firebase-auth-compat.js`),load(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore-compat.js`)]);
+    }catch(e){resolveReady(null);show('<span>Nu am putut încărca sincronizarea. Datele se salvează în acest browser.</span>');return}
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const auth=firebase.auth(),fs=firebase.firestore();
+    let first=true;
+    auth.onAuthStateChanged(user=>{
+      if(!first){location.reload();return}
+      first=false;
+      if(user){
+        resolveReady({fs,user});
+        show(`<span>Sincronizat ca <b>${(user.email||"").replace(/[<>&"]/g,"")}</b></span><button type="button" id="acctOut">Ieșire</button>`);
+        document.getElementById("acctOut").onclick=()=>auth.signOut();
+      }else{
+        resolveReady(null);
+        show('<span>Datele stau doar în acest browser.</span><button type="button" id="acctIn" class="on">Conectează-te cu Google</button>');
+        document.getElementById("acctIn").onclick=async()=>{
+          const p=new firebase.auth.GoogleAuthProvider();
+          try{await auth.signInWithPopup(p)}catch(e){
+            if(e&&(e.code==="auth/popup-blocked"||e.code==="auth/operation-not-supported-in-this-environment"))auth.signInWithRedirect(p);
+            else if(e&&e.code!=="auth/popup-closed-by-user"&&e.code!=="auth/cancelled-popup-request")show('<span>Conectarea nu a mers ('+String(e.code||"eroare").replace(/[<>&"]/g,"")+'). Încearcă din nou.</span>');
+          }
+        };
+      }
+    });
+  })();
+})();
+</script>
 <div class="wrap" id="app">
   <header class="top">
     <div>
@@ -664,7 +714,7 @@ let savedPal="cupru";try{savedPal=localStorage.getItem(LS+"-paleta")||"cupru"}ca
 setPalette(savedPal);
 
 /* backup: vizibil doar când pagina rulează în afara Claude (ex. GitHub Pages) */
-const standalone=!(window.claude&&window.claude.use);
+const standalone=!(window.claude&&window.claude.use)||!!window.claude.__firebase;
 $("backup").hidden=!standalone;
 $("importFile").addEventListener("change",e=>{
   const f=e.target.files[0];if(!f)return;
@@ -977,9 +1027,13 @@ document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...setti
     if(!db||!uidv){$("btSync").textContent="Salvat în acest browser";return}
     col=db.collection("data/users/"+uidv+"/betdata/bets");
     setRef=db.doc("data/users/"+uidv+"/betsettings");
-    col.onSnapshot(s=>{bets=s.docs.map(d=>({id:d.id,...d.data()}));lsSet(LSB,bets);render();$("btSync").textContent="Sincronizat pe toate dispozitivele tale"},
+    let firstSnap=true;
+    col.onSnapshot(s=>{
+      if(firstSnap){firstSnap=false;const local=lsGet(LSB,[]);
+        if(s.empty&&local.length){local.forEach(b=>{const {id,...body}=b;col.doc(id).set(body).catch(()=>{})});return}}
+      bets=s.docs.map(d=>({id:d.id,...d.data()}));lsSet(LSB,bets);render();$("btSync").textContent="Sincronizat pe toate dispozitivele tale"},
       ()=>{$("btSync").textContent="Sincronizarea s-a oprit. Reîncarcă pagina."});
-    setRef.onSnapshot(s=>{if(s.exists){settings={...settings,...s.data()};lsSet(LSS,settings);render()}});
+    setRef.onSnapshot(s=>{if(!s.exists&&lsGet(LSS,null)){setRef.set({...settings}).catch(()=>{});return}if(s.exists){settings={...settings,...s.data()};lsSet(LSS,settings);render()}});
   }catch(e){$("btSync").textContent="Salvat în acest browser"}
 })();
 })();
