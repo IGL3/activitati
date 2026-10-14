@@ -800,6 +800,8 @@ connect();
 /* ---------- jurnal de pariuri ---------- */
 (function(){
 const MARKETS=["1X2","Șansă dublă","GG / NG","Peste/Sub goluri","Handicap","Cornere","Cartonașe","Marcator","Pauză/Final","Bilet combinat","Altul"];
+/* tipurile noi (venite din „Lipește bilet”) apar automat în listă, înainte de „Altul” */
+function allMarkets(cur){const extra=[...new Set([...bets.map(b=>b.market),cur].filter(m=>m&&!MARKETS.includes(m)))];return [...MARKETS.slice(0,-1),...extra,"Altul"]}
 const RES={pending:"În așteptare",won:"Câștigat",lost:"Pierdut",void:"Anulat",cashout:"Cashout"};
 const LSB="bt-bets", LSS="bt-settings";
 let bets=[], settings={bankroll:500,currency:"RON",monthlyBudget:0,maxPct:3};
@@ -940,7 +942,7 @@ function openSheet(b){
       <label class="bt-field"><span>Data</span><input id="btfDate" type="date" value="${esc(e.date||today())}"></label>
       <label class="bt-field"><span>Competiție</span><input id="btfComp" list="btdlComp" placeholder="SuperLiga" value="${esc(e.comp||"")}" autocomplete="off"></label>
     </div>
-    <div class="bt-field"><span>Tip pariu</span><div class="bt-seg" id="btfMarket">${MARKETS.map(m=>`<button type="button" aria-pressed="${e.market===m}" data-v="${esc(m)}">${esc(m)}</button>`).join("")}</div></div>
+    <div class="bt-field"><span>Tip pariu</span><div class="bt-seg" id="btfMarket">${allMarkets(e.market).map(m=>`<button type="button" aria-pressed="${e.market===m}" data-v="${esc(m)}">${esc(m)}</button>`).join("")}</div></div>
     <label class="bt-field"><span>Selecție</span><input id="btfPick" placeholder="ex. 1, GG, Peste 2.5" value="${esc(e.pick||"")}" autocomplete="off"></label>
     <div class="bt-two">
       <label class="bt-field"><span>Cotă</span><input id="btfOdds" inputmode="decimal" placeholder="1.85" value="${esc(e.odds||"")}"></label>

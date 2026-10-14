@@ -9,6 +9,7 @@ Utilizatorul trimite poza biletului în chat; răspunde cu UN bloc JSON pe care 
 Câmpuri (română sau engleză): `meci`/`match`, `data`/`date` (YYYY-MM-DD), `competitie`/`comp`, `tip`/`market`
 (1X2, Șansă dublă, GG / NG, Peste/Sub goluri, Handicap, Cornere, Cartonașe, Marcator, Pauză/Final, Bilet combinat, Altul),
 `selectie`/`pick`, `cota`/`odds` (cota totală), `miza`/`stake`, `casa`/`book`, `result` (pending|won|lost|void|cashout), `nota`.
+Dacă tipul de pariu nu există în listă, inventează un nume scurt și clar (ex. „Total ași”) și pune-l în `tip`: aplicația îl adaugă automat în lista de tipuri și în statistici (cerința utilizatorului).
 Bilet combinat: `meciuri`/`legs`: [{meci, selectie, competitie}] + cota totală → un singur pariu. Mai multe bilete: array sau `{"pariuri":[…]}`.
 
 ## Două publicări ale aceleiași pagini — țin-le mereu sincronizate
