@@ -212,6 +212,14 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .bt-btn{flex:1;border:0;border-radius:11px;padding:13px;font-weight:700;font-size:16px;background:var(--accent);color:var(--accent-ink)}
 .bt-btn.ghost{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
 .bt-btn.danger{background:var(--late-bg);color:var(--late)}
+.bt-field select{font-size:16px;background:var(--soft);border:1px solid var(--line);border-radius:9px;padding:10px 12px;width:100%;min-width:0;color:var(--ink)}
+.bt-note{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;text-align:left;color:inherit;width:100%}
+.bt-note .l1{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.bt-note .l1 b{font-size:15px;color:var(--ink);font-weight:600}
+.bt-note .txt{font-size:14px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
+.bt-form{display:flex;flex-direction:column;gap:12px}
+.bt-export-text{font-family:var(--f-mono);font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:9px;padding:8px;color:var(--ink);width:100%}
+.bt-btn:disabled{opacity:.5}
 .bt-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:14px;z-index:20}
 @media (prefers-reduced-motion:no-preference){.bt-sheet{animation:btup .22s ease-out}@keyframes btup{from{transform:translateY(30px);opacity:.6}}}
 .acct{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:8px 0;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted)}
@@ -621,7 +629,7 @@ document.addEventListener("click",e=>{
       try{navigator.clipboard.writeText(txt).then(done,()=>selectSum())}catch(err){selectSum()}break}
     case "sumclose": $("summaryBox").hidden=true;break;
     case "pal": setPalette(b.dataset.p);break;
-    case "export": {let pariuri={};try{pariuri={bets:JSON.parse(localStorage.getItem("bt-bets")||"[]"),settings:JSON.parse(localStorage.getItem("bt-settings")||"{}")}}catch(err){}
+    case "export": {let pariuri={};try{pariuri={bets:JSON.parse(localStorage.getItem("bt-bets")||"[]"),settings:JSON.parse(localStorage.getItem("bt-settings")||"{}"),notite:JSON.parse(localStorage.getItem("bt-notes")||"{}")}}catch(err){}
       const blob=new Blob([JSON.stringify({...state,pariuri},null,1)],{type:"application/json"});
       const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="jurnal-sedinta-"+today()+".json";
       document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast("Backup descărcat");break}
@@ -731,7 +739,7 @@ $("importFile").addEventListener("change",e=>{
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
   r.onload=()=>{try{const prev=state;const data=JSON.parse(r.result);state=normalize(data);commit();
-      if(data.pariuri&&Array.isArray(data.pariuri.bets)){try{localStorage.setItem("bt-bets",JSON.stringify(data.pariuri.bets));localStorage.setItem("bt-settings",JSON.stringify(data.pariuri.settings||{}))}catch(err){}document.dispatchEvent(new Event("bt-reload"))}
+      if(data.pariuri&&Array.isArray(data.pariuri.bets)){try{localStorage.setItem("bt-bets",JSON.stringify(data.pariuri.bets));localStorage.setItem("bt-settings",JSON.stringify(data.pariuri.settings||{}));if(data.pariuri.notite)localStorage.setItem("bt-notes",JSON.stringify(data.pariuri.notite))}catch(err){}document.dispatchEvent(new Event("bt-reload"))}
       toast("Backup încărcat",()=>{state=prev;commit()})}catch(err){toast("Fișierul nu e un backup valid al jurnalului")}
     e.target.value=""};
   r.readAsText(f);
@@ -747,7 +755,7 @@ connect();
 <div class="bt">
   <div class="bt-top">
     <div><div class="eyebrow">Fotbal</div><h1>Jurnal pariuri</h1></div>
-    <div class="daynav"><button class="icon-btn" id="btPasteBtn" type="button">Lipește bilet</button><button class="icon-btn" id="btSettingsBtn" type="button">Setări</button></div>
+    <div class="daynav"><button class="icon-btn" id="btPasteBtn" type="button">Lipește bilet</button><button class="icon-btn" id="btExportBtn" type="button">Export</button><button class="icon-btn" id="btSettingsBtn" type="button">Setări</button></div>
   </div>
   <section class="bt-board" aria-label="Rezumat pariuri">
     <div class="bt-row">
@@ -768,11 +776,13 @@ connect();
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="btTabBets" aria-selected="true" type="button">Pariuri</button>
       <button class="tab" role="tab" id="btTabStats" aria-selected="false" type="button">Statistici</button>
+      <button class="tab" role="tab" id="btTabNotes" aria-selected="false" type="button">Notițe</button>
     </div>
   </div>
   <div class="bt-chips" id="btFilters" aria-label="Perioadă"></div>
   <section id="btViewBets" class="bt-list"></section>
   <section id="btViewStats" class="bt-list" hidden></section>
+  <section id="btViewNotes" class="bt-list" hidden></section>
   <div class="sync" id="btSync"></div>
 </div>
 <button class="bt-fab" id="btFab" type="button">+ Pariu</button>
@@ -859,9 +869,9 @@ function render(){
   const pend=all.filter(b=>b.result==="pending").length;
   const badge=$("swBetBadge");badge.textContent=pend;badge.hidden=!pend;
   spark(all);alerts(all);filters();
-  $("btViewBets").hidden=tab!=="bets";$("btViewStats").hidden=tab!=="stats";
-  $("btTabBets").setAttribute("aria-selected",tab==="bets");$("btTabStats").setAttribute("aria-selected",tab==="stats");
-  tab==="bets"?renderBets(view):renderStats(view,s);
+  $("btViewBets").hidden=tab!=="bets";$("btViewStats").hidden=tab!=="stats";$("btViewNotes").hidden=tab!=="notes";$("btFilters").hidden=tab==="notes";
+  $("btTabBets").setAttribute("aria-selected",tab==="bets");$("btTabStats").setAttribute("aria-selected",tab==="stats");$("btTabNotes").setAttribute("aria-selected",tab==="notes");
+  if(tab==="bets")renderBets(view);else if(tab==="stats")renderStats(view,s);
 }
 function spark(all){
   let v=n(settings.bankroll);const pts=[v];all.filter(settled).slice().reverse().forEach(b=>{v+=profit(b);pts.push(v)});const ip=pendingStake(all);if(ip)pts.push(v-ip);
@@ -1085,17 +1095,114 @@ async function quickSettle(id,r){const b=bets.find(x=>x.id===id);if(b){await sav
 async function clearExamples(){for(const b of bets.filter(b=>b.example))await removeBet(b.id);toast("Exemple șterse")}
 let tt=null;function toast(t){const el=$("btToast");el.textContent=t;el.hidden=false;clearTimeout(tt);tt=setTimeout(()=>el.hidden=true,1800)}
 
+
+/* ---------- Notițe pe echipe (sezonul 2026–27) ---------- */
+const LEAGUES=[
+  ["ES","Spania","La Liga",["Alavés","Athletic Bilbao","Atlético Madrid","Barcelona","Celta Vigo","Deportivo La Coruña","Elche","Espanyol","Getafe","Levante","Málaga","Osasuna","Racing Santander","Rayo Vallecano","Real Betis","Real Madrid","Real Sociedad","Sevilla","Valencia","Villarreal"]],
+  ["EN","Anglia","Premier League",["Arsenal","Aston Villa","Bournemouth","Brentford","Brighton","Chelsea","Coventry City","Crystal Palace","Everton","Fulham","Hull City","Ipswich Town","Leeds United","Liverpool","Manchester City","Manchester United","Newcastle United","Nottingham Forest","Sunderland","Tottenham Hotspur"]],
+  ["RO","România","SuperLiga",["CFR Cluj","Corvinul Hunedoara","Csikszereda","Dinamo București","FC Argeș","FC Botoșani","FC Voluntari","FCSB","Farul Constanța","Oțelul Galați","Petrolul Ploiești","Rapid București","Sepsi Sfântu Gheorghe","Universitatea Cluj","Universitatea Craiova","UTA Arad"]],
+  ["IT","Italia","Serie A",["Atalanta","Bologna","Cagliari","Como","Fiorentina","Frosinone","Genoa","Inter","Juventus","Lazio","Lecce","Milan","Monza","Napoli","Parma","Roma","Sassuolo","Torino","Udinese","Venezia"]],
+  ["FR","Franța","Ligue 1",["Angers","Auxerre","Brest","Le Havre","Le Mans","Lens","Lille","Lorient","Lyon","Marseille","Monaco","Nice","Paris FC","Paris Saint-Germain","Rennes","Strasbourg","Toulouse","Troyes"]],
+  ["BE","Belgia","Pro League",["Anderlecht","Antwerp","Beveren","Cercle Brugge","Charleroi","Club Brugge","Genk","Gent","Kortrijk","La Louvière","Lommel","Mechelen","OH Leuven","Sint-Truiden","Standard Liège","Union Saint-Gilloise","Westerlo","Zulte Waregem"]],
+  ["DE","Germania","Bundesliga",["Augsburg","Bayer Leverkusen","Bayern München","Borussia Dortmund","Borussia Mönchengladbach","Eintracht Frankfurt","Elversberg","FC Köln","Freiburg","Hamburger SV","Hoffenheim","Mainz 05","Paderborn","RB Leipzig","Schalke 04","Union Berlin","VfB Stuttgart","Werder Bremen"]],
+  ["PT","Portugalia","Primeira Liga",["Académico de Viseu","Alverca","Arouca","Benfica","Braga","Casa Pia","Estoril Praia","Estrela da Amadora","Famalicão","Gil Vicente","Marítimo","Moreirense","Nacional","Porto","Rio Ave","Santa Clara","Sporting CP","Vitória de Guimarães"]]
+];
+const LSN="bt-notes";
+let notes=lsGet(LSN,{}), notesRef=null, noteCountry="ES", noteTeam="", noteTimer=null, notesFilter="all";
+const countryName=c=>(LEAGUES.find(l=>l[0]===c)||[])[1]||c;
+const fmtWhen=t=>{if(!t)return"";const d=new Date(t);return d.getDate()+"."+pad(d.getMonth()+1)+"."+String(d.getFullYear()).slice(2)};
+function saveNotesSoon(){
+  lsSet(LSN,notes);$("btnSaved").textContent="Se salvează…";
+  clearTimeout(noteTimer);noteTimer=setTimeout(async()=>{noteTimer=null;
+    if(notesRef){try{await notesRef.set({notes});$("btnSaved").textContent="Salvat"}catch(e){$("btnSaved").textContent="Nu s-a putut salva online. Rămâne în acest browser."}}
+    else $("btnSaved").textContent="Salvat în acest browser";
+  },700);
+}
+function renderNotes(){
+  const el=$("btViewNotes");
+  const lg=LEAGUES.find(l=>l[0]===noteCountry)||LEAGUES[0];
+  if(noteTeam&&!lg[3].includes(noteTeam))noteTeam="";
+  const key=noteCountry+"|"+noteTeam,cur=noteTeam?notes[key]:null;
+  const withNotes=Object.entries(notes).filter(([k,v])=>v&&v.t&&(notesFilter==="all"||k.startsWith(noteCountry+"|"))).sort((a,b)=>(b[1].u||0)-(a[1].u||0));
+  el.innerHTML=`<div class="bt-card">
+    <div class="bt-two">
+      <label class="bt-field"><span>Țara</span><select id="btnCountry">${LEAGUES.map(l=>`<option value="${l[0]}" ${l[0]===noteCountry?"selected":""}>${l[1]}</option>`).join("")}</select></label>
+      <label class="bt-field"><span>Echipa</span><select id="btnTeam"><option value="">Alege echipa…</option>${lg[3].map(t=>`<option ${t===noteTeam?"selected":""}>${esc(t)}</option>`).join("")}</select></label>
+    </div>
+    ${noteTeam?`<label class="bt-field"><span>Notițe despre ${esc(noteTeam)}</span><textarea id="btnText" rows="6" placeholder="ex. Marchează mult acasă, apărare slabă pe faze fixe, golgheterul e accidentat…">${esc(cur&&cur.t||"")}</textarea></label>
+    <div class="bt-row"><span class="bt-hint" id="btnSaved">${cur&&cur.u?"Actualizat "+fmtWhen(cur.u):""}</span></div>`
+    :`<p class="bt-hint">Alege țara și echipa ca să scrii notițe. Se salvează singure.</p>`}
+  </div>
+  <div class="bt-row"><h2>Echipe cu notițe</h2>
+    <div class="bt-chips"><button class="bt-chip" type="button" data-nf="all" aria-pressed="${notesFilter==="all"}">Toate</button><button class="bt-chip" type="button" data-nf="country" aria-pressed="${notesFilter!=="all"}">${esc(countryName(noteCountry))}</button></div></div>
+  ${withNotes.length?withNotes.map(([k,v])=>{const [c,t]=k.split("|");return `<button class="bt-note" type="button" data-nk="${esc(k)}">
+      <span class="l1"><b>${esc(t)}</b><span>${esc(countryName(c))} · ${fmtWhen(v.u)}</span></span>
+      <span class="txt">${esc(v.t.length>180?v.t.slice(0,180)+"…":v.t)}</span></button>`}).join("")
+   :`<div class="bt-empty">Nicio notiță încă${notesFilter==="all"?"":" pentru "+esc(countryName(noteCountry))}.</div>`}`;
+  $("btnCountry").onchange=e=>{noteCountry=e.target.value;noteTeam="";renderNotes()};
+  $("btnTeam").onchange=e=>{noteTeam=e.target.value;renderNotes();const ta=$("btnText");if(ta)ta.focus()};
+  const ta=$("btnText");
+  if(ta)ta.addEventListener("input",()=>{const v=ta.value.replace(/\s+$/,"");if(v)notes[key]={t:v,u:Date.now()};else delete notes[key];saveNotesSoon()});
+  el.querySelectorAll("[data-nf]").forEach(b=>b.onclick=()=>{notesFilter=b.dataset.nf;renderNotes()});
+  el.querySelectorAll("[data-nk]").forEach(b=>b.onclick=()=>{const [c,t]=b.dataset.nk.split("|");noteCountry=c;noteTeam=t;renderNotes();window.scrollTo({top:$("btViewNotes").offsetTop-80,behavior:"smooth"})});
+}
+
+/* ---------- Export pariuri ---------- */
+const inClaude=!!(window.claude&&window.claude.use&&!window.claude.__firebase);
+function betsCSV(list){
+  const q=v=>{v=String(v??"");return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  const dec=v=>(Math.round(v*100)/100).toFixed(2).replace(".",",");
+  const head=["Data","Meci","Competiție","Tip pariu","Selecție","Cotă","Miză","Rezultat","Cashout","Profit","Casa","Notă"];
+  const rows=list.map(b=>[b.date,b.match,b.comp,b.market,b.pick,dec(n(b.odds)),dec(n(b.stake)),RES[b.result]||b.result,b.result==="cashout"?dec(n(b.cashout)):"",b.result==="pending"?"":dec(profit(b)),b.book,b.note].map(q).join(";"));
+  return [head.join(";"),...rows].join("\n");
+}
+function openExport(){
+  const months=[...new Set(bets.filter(b=>!b.example).map(b=>monthKey(b.date)).filter(Boolean))].sort().reverse();
+  const ML=["ianuarie","februarie","martie","aprilie","mai","iunie","iulie","august","septembrie","octombrie","noiembrie","decembrie"];
+  const mName=m=>{const [y,mm]=m.split("-");return ML[+mm-1]+" "+y};
+  let sel=months.includes(today().slice(0,7))?today().slice(0,7):(months[0]||"all");
+  const sh=$("btSheet");
+  const pick=()=>sortBets(bets.filter(b=>!b.example&&(sel==="all"||monthKey(b.date)===sel))).reverse();
+  function draw(){
+    const list=pick(),s=summarize(list);
+    sh.innerHTML=`<div class="bt-grab"></div><div class="bt-form">
+      <h2 id="btSheetTitle">Export pariuri</h2>
+      <label class="bt-field"><span>Perioada</span><select id="bteMonth">${months.map(m=>`<option value="${m}" ${m===sel?"selected":""}>${mName(m)}</option>`).join("")}<option value="all" ${sel==="all"?"selected":""}>Toate pariurile</option></select></label>
+      <p class="bt-hint">${list.length} pariuri · mizat ${fmt(s.staked)} · profit ${fmt(s.profit,true)} · ROI ${s.staked?pct(s.roi):"–"}</p>
+      <p class="bt-hint">Pentru analiză: apasă „Copiază pentru Claude” și lipește textul în chat.</p>
+      <div class="bt-actions"><button class="bt-btn" type="button" id="bteCopy" ${list.length?"":"disabled"}>Copiază pentru Claude</button></div>
+      ${inClaude?"":`<div class="bt-actions"><button class="bt-btn ghost" type="button" id="bteCsv" ${list.length?"":"disabled"}>Descarcă fișier Excel (CSV)</button></div>`}
+      <textarea id="bteText" class="bt-export-text" rows="4" readonly hidden></textarea>
+      <div class="bt-actions"><button class="bt-btn ghost" type="button" id="bteClose">Închide</button></div>
+    </div>`;
+    $("bteMonth").onchange=e=>{sel=e.target.value;draw()};
+    $("bteClose").onclick=closeSheet;
+    const label=sel==="all"?"toate pariurile":mName(sel);
+    const text=()=>`Pariurile mele, ${label} (bankroll inițial ${fmt(n(settings.bankroll))}, bankroll acum ${fmt(bankNow())}):\n`+betsCSV(list);
+    $("bteCopy").onclick=()=>{const t=text(),btn=$("bteCopy");
+      const fallback=()=>{const ta=$("bteText");ta.value=t;ta.hidden=false;ta.focus();ta.select();btn.textContent="Selectat: copiază manual"};
+      try{navigator.clipboard.writeText(t).then(()=>{btn.textContent="Copiat";toast("Copiat. Lipește-l în chat.")},fallback)}catch(e){fallback()}};
+    const csvBtn=$("bteCsv");
+    if(csvBtn)csvBtn.onclick=()=>{const blob=new Blob(["﻿"+betsCSV(list)],{type:"text/csv;charset=utf-8"});
+      const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="pariuri-"+(sel==="all"?"toate":sel)+".csv";
+      document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast("Fișier descărcat")};
+  }
+  draw();$("btScrim").hidden=false;sh.hidden=false;
+}
+
 $("btFab").onclick=()=>openSheet(null);
 $("btScrim").onclick=closeSheet;
 $("btSettingsBtn").onclick=openSettings;
 $("btPasteBtn").onclick=openPaste;
 $("btTabBets").onclick=()=>{tab="bets";render()};
 $("btTabStats").onclick=()=>{tab="stats";render()};
+$("btTabNotes").onclick=()=>{tab="notes";render();renderNotes()};
+$("btExportBtn").onclick=openExport;
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("btSheet").hidden)closeSheet()});
 
 bets=lsGet(LSB,[]);settings={...settings,...lsGet(LSS,{})};
 render();
-document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...settings,...lsGet(LSS,{})};render()});
+document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...settings,...lsGet(LSS,{})};notes=lsGet(LSN,{});render();if(tab==="notes")renderNotes();if(notesRef)notesRef.set({notes}).catch(()=>{})});
 (async()=>{
   if(!window.claude||!window.claude.use){$("btSync").textContent="Salvat în acest browser";return}
   try{
@@ -1104,6 +1211,13 @@ document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...setti
     if(!db||!uidv){$("btSync").textContent="Salvat în acest browser";return}
     col=db.collection("data/users/"+uidv+"/betdata/bets");
     setRef=db.doc("data/users/"+uidv+"/betsettings");
+    notesRef=db.doc("data/users/"+uidv+"/betnotes");
+    notesRef.onSnapshot(s=>{
+      if(!s.exists){if(Object.keys(notes).length)notesRef.set({notes}).catch(()=>{});return}
+      if(noteTimer||s.metadata.hasPendingWrites)return;
+      notes=(s.data()||{}).notes||{};lsSet(LSN,notes);
+      const ta=$("btnText");if(tab==="notes"&&!(ta&&document.activeElement===ta))renderNotes();
+    });
     let firstSnap=true;
     col.onSnapshot(s=>{
       if(firstSnap){firstSnap=false;const local=lsGet(LSB,[]);

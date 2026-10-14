@@ -4,6 +4,12 @@ Tracker personal pentru ședința zilnică de dimineață (UI în limba română
 Pagina are două taburi sus: **Activități** (jurnalul, `#app`) și **Pariuri** (jurnal de pariuri fotbal, `#btApp`, clase/id-uri cu prefix `bt`).
 Pariurile: în Claude stau în `data/users/<id>/betdata/bets` și `data/users/<id>/betsettings`; pe GitHub Pages în localStorage (`bt-bets`, `bt-settings`) și intră în backup sub cheia `pariuri`.
 
+## Notițe pe echipe și export (tab Pariuri)
+- Sub-tabul **Notițe**: țară → echipă → notiță (autosalvare). Lista de echipe e `LEAGUES` în cod, sezonul **2026–27**
+  (La Liga, Premier League, SuperLiga, Serie A, Ligue 1, Pro League (18 echipe), Bundesliga, Primeira Liga). Actualizează-o vara, după promovări/retrogradări.
+  Stocare: doc `data/users/<id>/betnotes` = `{notes:{"RO|FCSB":{t,u}}}`; local `bt-notes`; intră în backup ca `pariuri.notite`.
+- Butonul **Export**: alege luna → „Copiază pentru Claude” (CSV cu `;` + bankroll, de lipit în chat pentru analiză) sau, pe GitHub, descarcă CSV (Excel, zecimale cu virgulă).
+
 ## Lipește bilet (tab Pariuri)
 Utilizatorul trimite poza biletului în chat; răspunde cu UN bloc JSON pe care îl lipește în „Lipește bilet”.
 Câmpuri (română sau engleză): `meci`/`match`, `data`/`date` (YYYY-MM-DD), `competitie`/`comp`, `tip`/`market`
