@@ -218,6 +218,9 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .bt-note .l1 b{font-size:15px;color:var(--ink);font-weight:600}
 .bt-note .txt{font-size:14px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
 .bt-form{display:flex;flex-direction:column;gap:12px}
+.bt-note-act{display:flex;gap:14px}
+.bt-del{color:var(--late)}
+.bt-note-edit{font-size:16px;background:var(--soft);border:1px solid var(--accent);border-radius:9px;padding:10px 12px;width:100%;color:var(--ink);font-family:inherit}
 .bt-export-text{font-family:var(--f-mono);font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:9px;padding:8px;color:var(--ink);width:100%}
 .bt-btn:disabled{opacity:.5}
 .bt-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:14px;z-index:20}
@@ -1108,43 +1111,77 @@ const LEAGUES=[
   ["PT","Portugalia","Primeira Liga",["Académico de Viseu","Alverca","Arouca","Benfica","Braga","Casa Pia","Estoril Praia","Estrela da Amadora","Famalicão","Gil Vicente","Marítimo","Moreirense","Nacional","Porto","Rio Ave","Santa Clara","Sporting CP","Vitória de Guimarães"]]
 ];
 const LSN="bt-notes";
-let notes=lsGet(LSN,{}), notesRef=null, noteCountry="ES", noteTeam="", noteTimer=null, notesFilter="all";
+/* notes = {"RO|FCSB":{items:[{id,t,u}]}}; formatul vechi {t,u} (o singură notiță) se convertește automat */
+function normNotes(o){
+  const out={};
+  Object.entries(o&&typeof o==="object"?o:{}).forEach(([k,v])=>{
+    if(!v)return;
+    let items=Array.isArray(v.items)?v.items.filter(x=>x&&x.t):(v.t?[{id:"n"+(v.u||Date.now()).toString(36),t:v.t,u:v.u||Date.now()}]:[]);
+    if(items.length)out[k]={items};
+  });
+  return out;
+}
+let notes=normNotes(lsGet(LSN,{})), notesRef=null, noteCountry="ES", noteTeam="", noteTimer=null, notesFilter="all", noteEdit=null, noteDel=null;
 const countryName=c=>(LEAGUES.find(l=>l[0]===c)||[])[1]||c;
-const fmtWhen=t=>{if(!t)return"";const d=new Date(t);return d.getDate()+"."+pad(d.getMonth()+1)+"."+String(d.getFullYear()).slice(2)};
-function saveNotesSoon(){
-  lsSet(LSN,notes);$("btnSaved").textContent="Se salvează…";
+const fmtWhen=t=>{if(!t)return"";const d=new Date(t);return d.getDate()+"."+pad(d.getMonth()+1)+"."+String(d.getFullYear()).slice(2)+" "+pad(d.getHours())+":"+pad(d.getMinutes())};
+const itemsOf=k=>(notes[k]&&notes[k].items||[]).slice().sort((a,b)=>(b.u||0)-(a.u||0));
+function saveNotesSoon(msg){
+  lsSet(LSN,notes);
   clearTimeout(noteTimer);noteTimer=setTimeout(async()=>{noteTimer=null;
-    if(notesRef){try{await notesRef.set({notes});$("btnSaved").textContent="Salvat"}catch(e){$("btnSaved").textContent="Nu s-a putut salva online. Rămâne în acest browser."}}
-    else $("btnSaved").textContent="Salvat în acest browser";
-  },700);
+    if(notesRef){try{await notesRef.set({notes})}catch(e){toast("Nu s-a putut salva online. Rămâne în acest browser.")}}
+  },300);
+  if(msg)toast(msg);
 }
 function renderNotes(){
   const el=$("btViewNotes");
   const lg=LEAGUES.find(l=>l[0]===noteCountry)||LEAGUES[0];
   if(noteTeam&&!lg[3].includes(noteTeam))noteTeam="";
-  const key=noteCountry+"|"+noteTeam,cur=noteTeam?notes[key]:null;
-  const withNotes=Object.entries(notes).filter(([k,v])=>v&&v.t&&(notesFilter==="all"||k.startsWith(noteCountry+"|"))).sort((a,b)=>(b[1].u||0)-(a[1].u||0));
+  const key=noteCountry+"|"+noteTeam,list=noteTeam?itemsOf(key):[];
+  const teams=Object.keys(notes).filter(k=>notesFilter==="all"||k.startsWith(noteCountry+"|"))
+    .map(k=>({k,items:itemsOf(k)})).filter(x=>x.items.length).sort((a,b)=>b.items[0].u-a.items[0].u);
+  const count=k=>(notes[k]&&notes[k].items.length)||0;
   el.innerHTML=`<div class="bt-card">
     <div class="bt-two">
       <label class="bt-field"><span>Țara</span><select id="btnCountry">${LEAGUES.map(l=>`<option value="${l[0]}" ${l[0]===noteCountry?"selected":""}>${l[1]}</option>`).join("")}</select></label>
-      <label class="bt-field"><span>Echipa</span><select id="btnTeam"><option value="">Alege echipa…</option>${lg[3].map(t=>`<option ${t===noteTeam?"selected":""}>${esc(t)}</option>`).join("")}</select></label>
+      <label class="bt-field"><span>Echipa</span><select id="btnTeam"><option value="">Alege echipa…</option>${lg[3].map(t=>{const c=count(noteCountry+"|"+t);return `<option value="${esc(t)}" ${t===noteTeam?"selected":""}>${esc(t)}${c?" ("+c+")":""}</option>`}).join("")}</select></label>
     </div>
-    ${noteTeam?`<label class="bt-field"><span>Notițe despre ${esc(noteTeam)}</span><textarea id="btnText" rows="6" placeholder="ex. Marchează mult acasă, apărare slabă pe faze fixe, golgheterul e accidentat…">${esc(cur&&cur.t||"")}</textarea></label>
-    <div class="bt-row"><span class="bt-hint" id="btnSaved">${cur&&cur.u?"Actualizat "+fmtWhen(cur.u):""}</span></div>`
-    :`<p class="bt-hint">Alege țara și echipa ca să scrii notițe. Se salvează singure.</p>`}
+    ${noteTeam?`<form id="btnForm" class="bt-form" novalidate>
+      <label class="bt-field"><span>Notiță nouă despre ${esc(noteTeam)}</span><textarea id="btnText" rows="3" placeholder="ex. Marchează mult acasă, golgheterul e accidentat…"></textarea></label>
+      <div class="bt-actions"><button class="bt-btn" type="submit">Adaugă notița</button></div>
+    </form>
+    ${list.length?`<div class="bt-list">${list.map(it=>noteEdit===it.id
+      ?`<div class="bt-note"><textarea id="btnEditText" rows="4" class="bt-note-edit">${esc(it.t)}</textarea>
+         <div class="bt-actions"><button class="bt-btn ghost" type="button" data-ncancel>Renunță</button><button class="bt-btn" type="button" data-nsave="${it.id}">Salvează</button></div></div>`
+      :`<div class="bt-note"><span class="l1"><span>${fmtWhen(it.u)}</span><span class="bt-note-act">
+          <button type="button" class="bt-link" data-nedit="${it.id}">Editează</button>
+          <button type="button" class="bt-link bt-del" data-ndel="${it.id}">${noteDel===it.id?"Sigur ștergi?":"Șterge"}</button></span></span>
+          <span class="txt">${esc(it.t)}</span></div>`).join("")}</div>`
+      :`<p class="bt-hint">Nicio notiță pentru ${esc(noteTeam)} încă.</p>`}`
+    :`<p class="bt-hint">Alege țara și echipa. Poți adăuga oricâte notițe pentru fiecare echipă.</p>`}
   </div>
   <div class="bt-row"><h2>Echipe cu notițe</h2>
     <div class="bt-chips"><button class="bt-chip" type="button" data-nf="all" aria-pressed="${notesFilter==="all"}">Toate</button><button class="bt-chip" type="button" data-nf="country" aria-pressed="${notesFilter!=="all"}">${esc(countryName(noteCountry))}</button></div></div>
-  ${withNotes.length?withNotes.map(([k,v])=>{const [c,t]=k.split("|");return `<button class="bt-note" type="button" data-nk="${esc(k)}">
-      <span class="l1"><b>${esc(t)}</b><span>${esc(countryName(c))} · ${fmtWhen(v.u)}</span></span>
-      <span class="txt">${esc(v.t.length>180?v.t.slice(0,180)+"…":v.t)}</span></button>`}).join("")
+  ${teams.length?teams.map(({k,items})=>{const [c,t]=k.split("|"),last=items[0].t;return `<button class="bt-note" type="button" data-nk="${esc(k)}">
+      <span class="l1"><b>${esc(t)}</b><span>${esc(countryName(c))} · ${items.length} ${items.length===1?"notiță":"notițe"}</span></span>
+      <span class="txt">${esc(last.length>140?last.slice(0,140)+"…":last)}</span></button>`}).join("")
    :`<div class="bt-empty">Nicio notiță încă${notesFilter==="all"?"":" pentru "+esc(countryName(noteCountry))}.</div>`}`;
-  $("btnCountry").onchange=e=>{noteCountry=e.target.value;noteTeam="";renderNotes()};
-  $("btnTeam").onchange=e=>{noteTeam=e.target.value;renderNotes();const ta=$("btnText");if(ta)ta.focus()};
-  const ta=$("btnText");
-  if(ta)ta.addEventListener("input",()=>{const v=ta.value.replace(/\s+$/,"");if(v)notes[key]={t:v,u:Date.now()};else delete notes[key];saveNotesSoon()});
+  $("btnCountry").onchange=e=>{noteCountry=e.target.value;noteTeam="";noteEdit=noteDel=null;renderNotes()};
+  $("btnTeam").onchange=e=>{noteTeam=e.target.value;noteEdit=noteDel=null;renderNotes();const ta=$("btnText");if(ta)ta.focus()};
+  const f=$("btnForm");
+  if(f)f.onsubmit=ev=>{ev.preventDefault();const v=$("btnText").value.trim();if(!v){$("btnText").focus();return}
+    notes[key]=notes[key]||{items:[]};notes[key].items.push({id:"n"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),t:v,u:Date.now()});
+    saveNotesSoon("Notiță adăugată");renderNotes();const ta=$("btnText");if(ta)ta.focus()};
+  el.querySelectorAll("[data-nedit]").forEach(b=>b.onclick=()=>{noteEdit=b.dataset.nedit;noteDel=null;renderNotes();const ta=$("btnEditText");if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)}});
+  el.querySelectorAll("[data-ncancel]").forEach(b=>b.onclick=()=>{noteEdit=null;renderNotes()});
+  el.querySelectorAll("[data-nsave]").forEach(b=>b.onclick=()=>{const it=notes[key].items.find(x=>x.id===b.dataset.nsave),v=$("btnEditText").value.trim();
+    if(it&&v){it.t=v;it.u=Date.now()}else if(it&&!v){notes[key].items=notes[key].items.filter(x=>x!==it);if(!notes[key].items.length)delete notes[key]}
+    noteEdit=null;saveNotesSoon("Notiță salvată");renderNotes()});
+  el.querySelectorAll("[data-ndel]").forEach(b=>b.onclick=()=>{const id=b.dataset.ndel;
+    if(noteDel!==id){noteDel=id;renderNotes();return}
+    notes[key].items=notes[key].items.filter(x=>x.id!==id);if(!notes[key].items.length)delete notes[key];
+    noteDel=null;saveNotesSoon("Notiță ștearsă");renderNotes()});
   el.querySelectorAll("[data-nf]").forEach(b=>b.onclick=()=>{notesFilter=b.dataset.nf;renderNotes()});
-  el.querySelectorAll("[data-nk]").forEach(b=>b.onclick=()=>{const [c,t]=b.dataset.nk.split("|");noteCountry=c;noteTeam=t;renderNotes();window.scrollTo({top:$("btViewNotes").offsetTop-80,behavior:"smooth"})});
+  el.querySelectorAll("[data-nk]").forEach(b=>b.onclick=()=>{const [c,t]=b.dataset.nk.split("|");noteCountry=c;noteTeam=t;noteEdit=noteDel=null;renderNotes();window.scrollTo({top:$("btViewNotes").offsetTop-80,behavior:"smooth"})});
 }
 
 /* ---------- Export pariuri ---------- */
@@ -1202,7 +1239,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("btSheet").hidde
 
 bets=lsGet(LSB,[]);settings={...settings,...lsGet(LSS,{})};
 render();
-document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...settings,...lsGet(LSS,{})};notes=lsGet(LSN,{});render();if(tab==="notes")renderNotes();if(notesRef)notesRef.set({notes}).catch(()=>{})});
+document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...settings,...lsGet(LSS,{})};notes=normNotes(lsGet(LSN,{}));render();if(tab==="notes")renderNotes();if(notesRef)notesRef.set({notes}).catch(()=>{})});
 (async()=>{
   if(!window.claude||!window.claude.use){$("btSync").textContent="Salvat în acest browser";return}
   try{
@@ -1215,8 +1252,8 @@ document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...setti
     notesRef.onSnapshot(s=>{
       if(!s.exists){if(Object.keys(notes).length)notesRef.set({notes}).catch(()=>{});return}
       if(noteTimer||s.metadata.hasPendingWrites)return;
-      notes=(s.data()||{}).notes||{};lsSet(LSN,notes);
-      const ta=$("btnText");if(tab==="notes"&&!(ta&&document.activeElement===ta))renderNotes();
+      notes=normNotes((s.data()||{}).notes);lsSet(LSN,notes);
+      const ae=document.activeElement;if(tab==="notes"&&!noteEdit&&!(ae&&(ae.id==="btnText"||ae.id==="btnEditText")))renderNotes();
     });
     let firstSnap=true;
     col.onSnapshot(s=>{
