@@ -756,7 +756,7 @@ connect();
   </div>
   <section class="bt-board" aria-label="Rezumat pariuri">
     <div class="bt-row">
-      <div><div class="bt-lbl">Bankroll curent</div><div class="bt-big" id="btBank">–</div></div>
+      <div><div class="bt-lbl">Bankroll curent</div><div class="bt-big" id="btBank">–</div><div class="bt-hint" id="btInPlay" hidden></div></div>
       <div style="text-align:right"><div class="bt-lbl">Profit</div><div class="bt-delta" id="btProfit">–</div></div>
     </div>
     <svg class="bt-spark" id="btSpark" viewBox="0 0 300 64" preserveAspectRatio="none" aria-label="Evoluția bankroll-ului"></svg>
@@ -830,6 +830,10 @@ function profit(b){
   return 0;
 }
 const settled=b=>b.result!=="pending";
+/* bankroll disponibil: miza unui pariu în așteptare iese din bankroll până afli rezultatul;
+   câștigat → revine miza × cota, pierdut → miza rămâne scăzută, anulat → revine miza */
+const pendingStake=list=>list.filter(b=>b.result==="pending").reduce((a,b)=>a+n(b.stake),0);
+const bankNow=()=>n(settings.bankroll)+summarize(bets).profit-pendingStake(bets);
 function fmt(v,sign){const s=Math.abs(v).toLocaleString("ro-RO",{minimumFractionDigits:2,maximumFractionDigits:2});return (sign?(v>0?"+":v<0?"−":""):(v<0?"−":""))+s+" "+settings.currency}
 const pct=v=>(v>0?"+":"")+v.toLocaleString("ro-RO",{maximumFractionDigits:1})+"%";
 const sortBets=a=>a.slice().sort((x,y)=>(y.date||"").localeCompare(x.date||"")||n(y.createdAt)-n(x.createdAt));
@@ -848,7 +852,9 @@ function fmtDate(d){if(!d)return"";const [y,m,dd]=d.split("-");return dd+"."+m+"
 
 function render(){
   const all=sortBets(bets),view=all.filter(inPeriod),sAll=summarize(all),s=summarize(view);
-  $("btBank").textContent=fmt(n(settings.bankroll)+sAll.profit);
+  const inPlay=pendingStake(all);
+  $("btBank").textContent=fmt(bankNow());
+  $("btInPlay").textContent=`${fmt(inPlay)} în joc, scăzuți până afli rezultatul`;$("btInPlay").hidden=!inPlay;
   const pf=$("btProfit");pf.textContent=fmt(s.profit,true);pf.className="bt-delta "+(s.profit>0?"pos":s.profit<0?"neg":"");
   $("btRoi").textContent=s.staked?pct(s.roi):"–";
   $("btWr").textContent=s.settled?Math.round(s.wr)+"%":"–";
@@ -862,7 +868,7 @@ function render(){
   tab==="bets"?renderBets(view):renderStats(view,s);
 }
 function spark(all){
-  let v=n(settings.bankroll);const pts=[v];all.filter(settled).slice().reverse().forEach(b=>{v+=profit(b);pts.push(v)});
+  let v=n(settings.bankroll);const pts=[v];all.filter(settled).slice().reverse().forEach(b=>{v+=profit(b);pts.push(v)});const ip=pendingStake(all);if(ip)pts.push(v-ip);
   const svg=$("btSpark");
   if(pts.length<2){svg.innerHTML='<line x1="0" y1="32" x2="300" y2="32" stroke="currentColor" stroke-opacity=".4" stroke-dasharray="4 4"/>';return}
   const min=Math.min(...pts),max=Math.max(...pts),r=(max-min)||1;
@@ -971,7 +977,7 @@ function openSheet(b){
   const seg=(id,key,cb)=>$(id).querySelectorAll("button").forEach(x=>x.onclick=()=>{st[key]=x.dataset.v;$(id).querySelectorAll("button").forEach(y=>y.setAttribute("aria-pressed",y===x));cb&&cb()});
   seg("btfMarket","market");seg("btfRes","result",()=>{$("btfCashWrap").hidden=st.result!=="cashout"});
   function prev(){
-    const o=num("btfOdds"),s=num("btfStake"),bank=n(settings.bankroll)+summarize(bets).profit,lim=bank*n(settings.maxPct)/100;
+    const o=num("btfOdds"),s=num("btfStake"),bank=bankNow(),lim=bank*n(settings.maxPct)/100;
     let t=o&&s?`Câștig potențial: <b>${fmt(o*s)}</b> (profit ${fmt(s*(o-1),true)})`:"";
     if(s&&lim>0&&s>lim)t+=`<div class="bt-warn">Miza depășește ${settings.maxPct}% din bankroll (${fmt(lim)}).</div>`;
     $("btfPrev").innerHTML=t;
