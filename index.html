@@ -127,6 +127,16 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);fo
 .sres i{width:8px;height:8px;border-radius:50%;flex:none}
 .top .daynav .primary{margin-left:6px}
 .foot:has(#backup[hidden]){display:none}
+/* finalizate */
+.dgrp{font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:8px;display:flex;justify-content:space-between}
+.dlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ditem{background:var(--done-bg);border:1px solid color-mix(in srgb,var(--done) 45%,transparent);border-radius:10px;padding:10px 12px;display:flex;gap:12px;align-items:flex-start}
+.ditem .ck{color:var(--done);flex:none;margin-top:2px}
+.ditem .dm{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ditem .dt{overflow-wrap:anywhere}
+.ditem .da{display:flex;gap:2px;flex-wrap:wrap;justify-content:flex-end}
+.ditem .tag{background:rgba(0,0,0,.35)}
+@media (max-width:560px){.ditem{flex-wrap:wrap}.ditem .da{width:100%;justify-content:flex-start;padding-left:26px}}
 .content .bt{margin-inline:0;padding-inline:0;padding-block:4px 120px;max-width:1000px}
 @media (max-width:859px){.content .bt{padding-block:0 120px}}
 @media (max-width:1179px){
@@ -365,6 +375,7 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
   <nav class="navlist" id="navlist" aria-label="Secțiuni">
     <button type="button" class="nav" data-nav="azi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Azi</span><span class="n" id="nAzi"></span></button>
     <button type="button" class="nav" data-nav="recurente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/></svg><span>Recurente</span><span class="n" id="nRec"></span></button>
+    <button type="button" class="nav" data-nav="finalizate"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/></svg><span>Finalizate</span><span class="n" id="nFin"></span></button>
     <button type="button" class="nav" data-nav="probleme"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9L2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>Probleme</span><span class="n" id="nProb"></span></button>
     <button type="button" class="nav" data-nav="observatii"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/></svg><span>Alte observații</span><span class="n" id="nObs"></span></button>
     <div class="grp">Pariuri</div>
@@ -458,11 +469,14 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
   <div class="tabs" role="tablist" hidden>
     <button class="tab" role="tab" id="tabDay" aria-selected="true">Ziua</button>
     <button class="tab" role="tab" id="tabRec" aria-selected="false">Recurente</button>
+    <button class="tab" role="tab" id="tabDone" aria-selected="false">Finalizate</button>
   </div>
 
   <div id="summaryBox" class="summary" hidden></div>
 
   <div id="viewSearch" hidden></div>
+
+  <div id="viewDone" hidden></div>
 
   <div id="viewDay">
     <div style="display:flex;flex-direction:column;gap:16px">
@@ -685,7 +699,8 @@ function render(){
   $("eyebrow").textContent=isToday?"Ședința de dimineață · azi":(view<today()?"Istoric":"Planificare");
   $("dayTitle").textContent=longDate(view).replace(/^./,c=>c.toUpperCase());
   $("todayBtn").disabled=isToday;
-  $("tabDay").setAttribute("aria-selected",tab==="day");$("tabRec").setAttribute("aria-selected",tab==="rec");
+  $("tabDay").setAttribute("aria-selected",tab==="day");$("tabRec").setAttribute("aria-selected",tab==="rec");$("tabDone").setAttribute("aria-selected",tab==="done");
+  $("viewDone").hidden=tab!=="done"||!!q;if(tab==="done"&&!q)renderDone();
   $("viewDay").hidden=tab!=="day"||!!q;$("viewRec").hidden=tab!=="rec"||!!q;
   $("viewSearch").hidden=!q;if(q)renderSearch();
   if(dateFor!==view){dateFor=view;$("addDate").value=view}
@@ -742,6 +757,7 @@ function render(){
   setN("nRec",state.recurring.length);
   setN("nProb",state.issues.filter(i=>!i.resolved).length);
   setN("nObs",state.notes.length);
+  setN("nFin",state.tasks.filter(t=>t.status==="done").length);
 
   if(!$("summaryBox").hidden)renderSummary();
   if(editing){const el=$("edit-"+editing);if(el){el.focus();el.select()}}
@@ -795,6 +811,28 @@ function renderSearch(){
     ${hits.length?`<div class="sres">${hits.map(t=>`<button type="button" data-act="goto" data-date="${t.date||""}" data-id="${t.id}"><span class="sd">${t.date?shortDate(t.date):"fără dată"}</span><i style="background:${col[t.status]||"var(--muted)"}"></i><span class="st">${hl(t.title)}${t.note?`<small>${hl(t.note)}</small>`:""}</span></button>`).join("")}</div>`:`<div class="empty">Nicio activitate nu conține „${esc(q.trim())}”.</div>`}</section>`;
 }
 
+let doneRange="all";
+function renderDone(){
+  const t0=today(),ws=addDays(t0,-((parse(t0).getDay()+6)%7)),ms=t0.slice(0,8)+"01";
+  const from={all:"",week:ws,month:ms}[doneRange]||"";
+  const all=state.tasks.filter(t=>t.status==="done");
+  const list=all.filter(t=>(t.doneOn||t.date||"")>=from).sort((a,b)=>((b.doneOn||b.date||"")>(a.doneOn||a.date||"")?1:(b.doneOn||b.date||"")<(a.doneOn||a.date||"")?-1:(b.createdAt||0)-(a.createdAt||0)));
+  const groups=[];list.forEach(t=>{const k=t.doneOn||t.date||"";const g=groups[groups.length-1];if(g&&g.k===k)g.items.push(t);else groups.push({k,items:[t]})});
+  const chips=[["all","Toate"],["week","Săptămâna asta"],["month","Luna asta"]].map(([k,l])=>`<button type="button" class="bt-chip" data-act="drange" data-r="${k}" aria-pressed="${doneRange===k}">${l}</button>`).join("");
+  const CK='<svg class="ck" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  $("viewDone").innerHTML=`<section>
+    <div class="sec-head"><h2>Activități finalizate</h2><span class="count">${list.length}</span></div>
+    <div class="bt-chips" style="margin-top:4px">${chips}</div>
+    ${groups.length?groups.map(g=>`<div class="dgrp"><span>${g.k?longDate(g.k):"fără dată"}</span><span>${g.items.length}</span></div>
+      <ul class="dlist">${g.items.map(t=>`<li class="ditem">${CK}<div class="dm"><span class="dt">${esc(t.title)}</span>
+        ${(t.date&&t.doneOn&&t.date!==t.doneOn)||t.recurId||t.postponed?`<div class="meta">${t.date&&t.doneOn&&t.date!==t.doneOn?`<span class="tag">planificată pe ${shortDate(t.date)}</span>`:""}${t.recurId?`<span class="tag">↻ recurentă</span>`:""}${t.postponed?`<span class="tag">amânată ×${t.postponed}</span>`:""}</div>`:""}
+        ${t.note?`<div class="note">${esc(t.note)}</div>`:""}</div>
+        <div class="da"><button class="mini" data-act="goto" data-date="${t.date||""}" data-id="${t.id}">Vezi ziua</button><button class="mini" data-act="reopen" data-id="${t.id}">Redeschide</button></div></li>`).join("")}</ul>`).join("")
+      :`<div class="empty">${all.length?"Nicio activitate finalizată în perioada aleasă.":"Nicio activitate finalizată încă. Când marchezi o activitate cu „Gata”, apare aici."}</div>`}
+    ${all.length?`<div class="hint" style="margin-top:6px">Activitățile finalizate se păstrează 4 luni.</div>`:""}
+  </section>`;
+}
+
 /* ---------- rezumat ---------- */
 function summaryText(){
   const d=view, prev=prevWork(d);
@@ -832,6 +870,8 @@ document.addEventListener("click",e=>{
   switch(act){
     case "st": if(t){setStatus(t,b.dataset.s);commit()}break;
     case "edit": editing=id;render();break;
+    case "drange": doneRange=b.dataset.r;renderDone();break;
+    case "reopen": if(t){const prev={status:t.status,doneOn:t.doneOn,date:t.date};t.status="todo";delete t.doneOn;t.date=today();commit();toast("Mutată înapoi pe azi, la De făcut",()=>{Object.assign(t,prev);commit()})}break;
     case "cal": view=b.dataset.date;tab="day";openPostpone=null;calMonth=view.slice(0,7);render();break;
     case "calm": {const [y,m]=calMonth.split("-").map(Number);const d=new Date(y,m-1+(+b.dataset.dir),1);calMonth=d.getFullYear()+"-"+pad(d.getMonth()+1);renderCal();break}
     case "goto": {q="";$("searchInput").value="";tab="day";if(b.dataset.date){view=b.dataset.date;calMonth=view.slice(0,7)}render();const el=document.querySelector(`li.task[data-id="${b.dataset.id}"]`);if(el)el.scrollIntoView({block:"center"});break}
@@ -901,6 +941,7 @@ $("searchInput").addEventListener("focus",()=>{const a=$("swAct");if(a&&a.getAtt
 $("searchInput").addEventListener("keydown",e=>{if(e.key==="Escape"){e.target.value="";q="";render()}});
 $("tabDay").onclick=()=>{tab="day";render()};
 $("tabRec").onclick=()=>{tab="rec";render()};
+$("tabDone").onclick=()=>{tab="done";render()};
 $("summaryBtn").onclick=()=>{const box=$("summaryBox");box.hidden=!box.hidden;if(!box.hidden)renderSummary()};
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){if(genRecurring(today()))persist();render()}});
 
@@ -1504,6 +1545,7 @@ document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...setti
   const act={
     azi:()=>{$("swAct").click();clearSearch();$("tabDay").click();if(!$("todayBtn").disabled)$("todayBtn").click();scrollTo(0,0)},
     recurente:()=>{$("swAct").click();clearSearch();$("tabRec").click();scrollTo(0,0)},
+    finalizate:()=>{$("swAct").click();clearSearch();$("tabDone").click();scrollTo(0,0)},
     probleme:()=>{$("swAct").click();clearSearch();$("tabDay").click();$("secIssues").scrollIntoView({behavior:"smooth",block:"start"})},
     observatii:()=>{$("swAct").click();clearSearch();$("tabDay").click();$("secNotes").scrollIntoView({behavior:"smooth",block:"start"})},
     bilete:()=>{$("swBet").click();$("btTabBets").click()},
@@ -1517,6 +1559,7 @@ document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...setti
       if($("btTabNotes").getAttribute("aria-selected")==="true")return "notite";
       return "bilete";
     }
+    if($("tabDone").getAttribute("aria-selected")==="true")return "finalizate";
     return $("tabRec").getAttribute("aria-selected")==="true"?"recurente":"azi";
   }
   function sync(){
@@ -1528,7 +1571,7 @@ document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...setti
   }
   const mo=new MutationObserver(sync);
   ["app","btApp"].forEach(id=>mo.observe($(id),{attributes:true,attributeFilter:["hidden"]}));
-  ["tabRec","tabDay","btTabBets","btTabStats","btTabNotes"].forEach(id=>mo.observe($(id),{attributes:true,attributeFilter:["aria-selected"]}));
+  ["tabRec","tabDay","tabDone","btTabBets","btTabStats","btTabNotes"].forEach(id=>mo.observe($(id),{attributes:true,attributeFilter:["aria-selected"]}));
   mo.observe($("swBetBadge"),{attributes:true,childList:true,characterData:true,subtree:true});
   sync();
 })();
