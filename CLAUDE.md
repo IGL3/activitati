@@ -1,7 +1,11 @@
-# Jurnal de ședință
+# Activitățile mele (fost „Jurnal de ședință”)
 
 Tracker personal pentru ședința zilnică de dimineață (UI în limba română).
-Pagina are două taburi sus: **Activități** (jurnalul, `#app`) și **Pariuri** (jurnal de pariuri fotbal, `#btApp`, clase/id-uri cu prefix `bt`).
+Aspect: `.shell` = meniu fix în stânga (`.side`: căutare, navigație `.nav[data-nav]`, temă, cont/sincronizare) + `main.content`.
+În `#app` (Activități): `.maincol` (antet, compunere, linie de timp `.tl` cu restanțe/azi/altă dată) + `.rcol` (calendar `#calBox`, „Pe scurt” `#weekBox`, `#secIssues`, `#secNotes`).
+Pe telefon (<860px) `.side` are `display:contents`: meniul devine un rând de butoane lipit sus, tema și contul ajung la final.
+Comutarea între aplicații folosește încă butoanele ascunse `#swAct`/`#swBet` și taburile `#tabDay`/`#tabRec`/`#btTab*`; meniul din stânga doar le apasă (script la final).
+Sunt două aplicații: **Activități** (`#app`) și **Pariuri** (jurnal de pariuri fotbal, `#btApp`, clase/id-uri cu prefix `bt`).
 Pariurile: în Claude stau în `data/users/<id>/betdata/bets` și `data/users/<id>/betsettings`; pe GitHub Pages în localStorage (`bt-bets`, `bt-settings`) și intră în backup sub cheia `pariuri`.
 
 ## Notițe pe echipe și export (tab Pariuri)

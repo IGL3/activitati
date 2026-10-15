@@ -4,10 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#000000">
-<title>Jurnal de ședință</title>
+<title>Activitățile mele</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: o singură coloană de lucru (max 760px); ziua sus, apoi restanțe → azi → probleme → altă dată */
+/* Layout: meniu fix în stânga | activitățile zilei pe o linie de timp | calendar, cifre, probleme și observații în dreapta.
+   Pe telefon: totul într-o coloană, meniul devine un rând de butoane care rămâne sus. */
 /* Doar dark, fundal negru pentru toate temele; tema (data-palette pe <html>) schimbă doar culoarea butoanelor */
 :root{
   color-scheme:dark;
@@ -20,7 +21,7 @@
 }
 /* Roșu (implicit): roșu aprins pe negru, cu o tentă vișinie sus */
 :root[data-palette="rosu"]{ --accent:#E5132E; --accent-ink:#FFFFFF; }
-:root[data-palette="rosu"] .appbar{background:linear-gradient(180deg,#3B0509 0%,#1A0204 70%,var(--bg) 100%);border-bottom-color:#3B0509}
+:root[data-palette="rosu"] .side{background:linear-gradient(180deg,#3B0509 0%,#1A0204 34%,var(--surface) 68%)}
 /* Noapte: lavandă */
 :root[data-palette="noapte"]{ --accent:#B6A2FF; --accent-ink:#17112E; }
 *{box-sizing:border-box}
@@ -32,7 +33,125 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);fo
 .sw[aria-pressed="true"]{border-color:var(--ink)}
 .sw span{position:absolute;inset:0}
 .backup{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.wrap{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:20px 64px;display:flex;flex-direction:column;gap:18px}
+/* ---- schelet ---- */
+.shell{display:grid;grid-template-columns:240px minmax(0,1fr);gap:20px;padding-inline:20px;padding-block:20px;max-width:1560px;margin:0 auto;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.side{position:sticky;top:calc(20px + env(safe-area-inset-top,0px));height:calc(100vh - 40px);display:flex;flex-direction:column;gap:4px;padding:16px 12px;overflow-y:auto;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 20%,#000) 0%,var(--surface) 55%)}
+.brand{font:700 20px/1.15 var(--f-display);padding:4px 10px 14px;display:flex;gap:10px;align-items:center}
+.brand i{width:11px;height:11px;border-radius:3px;background:var(--accent);flex:none}
+.search{padding:0 4px 10px}
+.search input{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:rgba(0,0,0,.4);color:var(--ink);font-size:14px}
+.search input::placeholder{color:var(--muted)}
+.navlist{display:flex;flex-direction:column;gap:2px}
+.grp{font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:14px 10px 4px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;color:#C9C9CE;border:0;background:transparent;font:500 14.5px var(--f-body);text-align:left;width:100%}
+.nav:hover{background:rgba(255,255,255,.05);color:var(--ink)}
+.nav svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.nav[aria-current="page"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.nav .n{margin-left:auto;font:500 11px var(--f-mono);background:var(--soft);color:var(--muted);padding:1px 7px;border-radius:99px}
+.nav .n:empty{display:none}
+.nav[aria-current="page"] .n{background:rgba(0,0,0,.25);color:inherit}
+.sfoot{margin-top:auto;border-top:1px solid var(--line);padding:12px 6px 0;display:flex;flex-direction:column;gap:10px}
+.sfoot .swatches{gap:8px}
+.sfoot .sw{width:24px;height:24px}
+.sfoot .acct{padding:0;margin:0;max-width:none;flex-direction:column;align-items:flex-start;gap:6px;font-size:12.5px}
+.content{min-width:0}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+.maincol{display:flex;flex-direction:column;gap:16px;min-width:0;padding-bottom:48px}
+.rcol{display:flex;flex-direction:column;gap:14px;min-width:0;position:sticky;top:calc(20px + env(safe-area-inset-top,0px))}
+.rcol .box{padding:14px}
+.rcol section.box{gap:10px}
+.rcol .sec-head{border-bottom:0;padding-bottom:0}
+.rcol h2,.box h3{font:600 16px var(--f-display);margin:0}
+.box h3{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.box h3 span{font:500 11px var(--f-mono);color:var(--muted)}
+.rcol .addrow input[type=text]{background:#000;font-size:14px;padding:8px 10px}
+.rcol .addrow .ghost{padding:7px 10px;font-size:13px}
+.rcol .issue{background:#000}
+/* calendar */
+.calnav{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:500}
+.calnav .icon-btn{min-width:28px;height:28px;padding:0}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font:12.5px var(--f-mono);font-variant-numeric:tabular-nums}
+.cal .h{color:var(--muted);font-size:11px;padding-bottom:4px}
+.cal button{border:1px solid transparent;background:transparent;color:var(--ink);padding:5px 0 8px;border-radius:7px;position:relative;font:inherit}
+.cal button:hover{border-color:var(--line)}
+.cal button.o{color:#4a4a50}
+.cal button.we{color:var(--muted)}
+.cal button.sel{border-color:var(--ink)}
+.cal button.tdy{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.cal button[data-s]::after{content:"";position:absolute;left:50%;bottom:2px;width:4px;height:4px;border-radius:50%;transform:translateX(-50%)}
+.cal button[data-s="done"]::after{background:var(--done)}
+.cal button[data-s="plan"]::after{background:var(--doing)}
+.cal button[data-s="late"]::after{background:var(--late)}
+.cal button.tdy::after{background:var(--accent-ink)!important}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px}
+/* pe scurt */
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.k{background:var(--soft);border-radius:9px;padding:8px 10px}
+.k small{display:block;color:var(--muted);font-size:11.5px}
+.k b{font:600 21px var(--f-display);font-variant-numeric:tabular-nums}
+.k.g b{color:var(--done)}.k.r b{color:var(--late)}.k.a b{color:var(--doing)}
+.pbar{height:6px;border-radius:99px;background:var(--soft);overflow:hidden;margin:12px 0 5px}
+.pbar i{display:block;height:100%;background:var(--done);border-radius:99px}
+/* compunere */
+.composer{padding:12px;display:flex;flex-direction:column;gap:10px}
+.composer .addrow input[type=text]{background:#000}
+.crow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 10px;font-size:13px;color:#C9C9CE;display:inline-flex;gap:6px;align-items:center}
+.chip:hover{border-color:var(--muted);color:var(--ink)}
+.chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.chip input[type=date]{border:0;background:transparent;color:inherit;font:inherit;padding:0;color-scheme:dark}
+.crow .primary{margin-left:auto}
+/* linie de timp */
+.tl{display:flex;flex-direction:column;gap:20px}
+.tl>section{position:relative;padding-left:28px}
+.tl>section::before{content:"";position:absolute;left:9px;top:14px;bottom:-20px;width:2px;background:var(--line)}
+.tl>section:last-child::before{bottom:0}
+.tl .sec-head{position:relative;border-bottom:0;padding-bottom:2px}
+.tl .sec-head::before{content:"";position:absolute;left:-25px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--bg)}
+.tl .sec-late .sec-head::before{background:var(--late)}
+.tl .task{position:relative}
+.tl .task::before{content:"";position:absolute;left:-23px;top:19px;width:8px;height:8px;border-radius:50%;background:#3a3a40;box-shadow:0 0 0 4px var(--bg)}
+.tl .task.st-todo::before{background:var(--late)}.tl .task.st-doing::before{background:var(--doing)}.tl .task.st-done::before{background:var(--done)}
+.tl .task.dragging::before{display:none}
+/* căutare */
+.sres{display:flex;flex-direction:column;gap:6px}
+.sres button{display:flex;gap:10px;align-items:center;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);font:inherit}
+.sres button:hover{border-color:var(--muted)}
+.sres .sd{font:12px var(--f-mono);color:var(--muted);flex:none;width:92px}
+.sres .st{flex:1;min-width:0;overflow-wrap:anywhere}
+.sres .st small{display:block;color:var(--muted);font-size:12.5px}
+.sres mark{background:color-mix(in srgb,var(--accent) 35%,transparent);color:inherit;border-radius:3px}
+.sres i{width:8px;height:8px;border-radius:50%;flex:none}
+.top .daynav .primary{margin-left:6px}
+.foot:has(#backup[hidden]){display:none}
+.content .bt{margin-inline:0;padding-inline:0;padding-block:4px 120px;max-width:1000px}
+@media (max-width:859px){.content .bt{padding-block:0 120px}}
+@media (max-width:1179px){
+  .wrap{grid-template-columns:minmax(0,1fr)}
+  .rcol{position:static;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));align-items:start}
+}
+@media (max-width:859px){
+  .shell{display:flex;flex-direction:column;align-items:stretch;gap:14px;padding-inline:16px;padding-block:12px}
+  .shell>*,.navlist,.search,.brand,.sfoot{min-width:0}
+  .side{display:contents}
+  .brand{order:0;padding:4px 2px 0;font-size:22px}
+  .search{order:2;padding:0}
+  .navlist{order:1;position:sticky;top:env(safe-area-inset-top,0px);z-index:8;flex-direction:row;overflow-x:auto;gap:6px;padding-block:8px;margin-inline:-16px;padding-inline:16px;background:var(--bg);border-bottom:1px solid var(--line);scrollbar-width:none}
+  .navlist::-webkit-scrollbar{display:none}
+  .navlist .grp{display:none}
+  .nav{width:auto;flex:none;border:1px solid var(--line);background:var(--surface);padding:8px 12px;white-space:nowrap}
+  .nav svg{width:15px;height:15px}
+  .content{order:3}
+  .sfoot{order:4;border-top:1px solid var(--line);padding:14px 2px 24px;margin-top:0}
+  .rcol{grid-template-columns:minmax(0,1fr)}
+  .tl>section{padding-left:22px}
+  .tl>section::before{left:6px}
+  .tl .sec-head::before{left:-21px}
+  .tl .task::before{left:-19px}
+}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
@@ -144,7 +263,7 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .appbar .badge{font-family:var(--f-mono);font-size:11px;font-weight:500;padding:1px 7px;border-radius:999px;background:rgba(0,0,0,.25)}
 .appbar button[aria-selected="false"] .badge{background:var(--soft)}
 
-.bt{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:20px 120px;display:flex;flex-direction:column;gap:16px;font-variant-numeric:tabular-nums}
+.bt{max-width:860px;margin:0 auto;padding-inline:16px;padding-block:20px 120px;display:flex;flex-direction:column;gap:16px;font-variant-numeric:tabular-nums}
 .bt h2{font-family:var(--f-display);font-weight:600;font-size:18px;margin:0}
 .bt-top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
 .bt-top .icon-btn{white-space:nowrap}
@@ -239,11 +358,36 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
 </head>
 <body>
 
-<nav class="appbar" aria-label="Secțiuni"><div class="appbar-in" role="tablist">
+<div class="shell">
+<aside class="side panel" aria-label="Meniu">
+  <div class="brand"><i></i>Activitățile mele</div>
+  <div class="search"><input type="search" id="searchInput" placeholder="Caută activități…" autocomplete="off" aria-label="Caută în activități"></div>
+  <nav class="navlist" id="navlist" aria-label="Secțiuni">
+    <button type="button" class="nav" data-nav="azi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Azi</span><span class="n" id="nAzi"></span></button>
+    <button type="button" class="nav" data-nav="recurente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/></svg><span>Recurente</span><span class="n" id="nRec"></span></button>
+    <button type="button" class="nav" data-nav="probleme"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9L2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>Probleme</span><span class="n" id="nProb"></span></button>
+    <button type="button" class="nav" data-nav="observatii"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/></svg><span>Alte observații</span><span class="n" id="nObs"></span></button>
+    <div class="grp">Pariuri</div>
+    <button type="button" class="nav" data-nav="bilete"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4zM14 5v12"/></svg><span>Bilete</span><span class="n" id="nBil"></span></button>
+    <button type="button" class="nav" data-nav="statistici"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Statistici</span></button>
+    <button type="button" class="nav" data-nav="notite"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l5 5v13H6zM14 3v6h6"/></svg><span>Notițe echipe</span></button>
+  </nav>
+  <div class="sfoot">
+    <div class="swatches" role="group" aria-label="Temă">
+      <span class="hint">Temă</span>
+      <button class="sw" data-act="pal" data-p="rosu" aria-label="Roșu"><span style="background:linear-gradient(135deg,#000 50%,#E5132E 50%)"></span></button>
+      <button class="sw" data-act="pal" data-p="cupru" aria-label="Cupru"><span style="background:linear-gradient(135deg,#000 50%,#E0915E 50%)"></span></button>
+      <button class="sw" data-act="pal" data-p="noapte" aria-label="Noapte"><span style="background:linear-gradient(135deg,#000 50%,#B6A2FF 50%)"></span></button>
+    </div>
+    <div class="acct" id="acct" hidden></div>
+    <div class="sync" id="sync"></div>
+  </div>
+</aside>
+<main class="content">
+<nav class="appbar" aria-label="Aplicații" hidden><div class="appbar-in" role="tablist">
   <button type="button" role="tab" id="swAct" aria-selected="true">Activități</button>
   <button type="button" role="tab" id="swBet" aria-selected="false">Pariuri <span class="badge" id="swBetBadge" hidden></span></button>
 </div></nav>
-<div class="acct" id="acct" hidden></div>
 <script>
 /* ---------- GitHub Pages: sincronizare prin Firebase ----------
    Rulează doar pe *.github.io. Oferă aceeași interfață ca window.claude (use("db"), use("user")),
@@ -297,6 +441,7 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
 })();
 </script>
 <div class="wrap" id="app">
+ <div class="maincol">
   <header class="top">
     <div>
       <div class="eyebrow" id="eyebrow">Ședința de dimineață</div>
@@ -306,31 +451,36 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
       <button class="icon-btn" id="prevDay" aria-label="Ziua anterioară">‹</button>
       <button class="icon-btn" id="todayBtn">Azi</button>
       <button class="icon-btn" id="nextDay" aria-label="Ziua următoare">›</button>
+      <button class="primary" id="summaryBtn">Rezumat ședință</button>
     </div>
   </header>
 
-  <div class="row" style="justify-content:space-between">
-    <div class="tabs" role="tablist">
-      <button class="tab" role="tab" id="tabDay" aria-selected="true">Ziua</button>
-      <button class="tab" role="tab" id="tabRec" aria-selected="false">Recurente</button>
-    </div>
-    <button class="primary" id="summaryBtn">Rezumat ședință</button>
+  <div class="tabs" role="tablist" hidden>
+    <button class="tab" role="tab" id="tabDay" aria-selected="true">Ziua</button>
+    <button class="tab" role="tab" id="tabRec" aria-selected="false">Recurente</button>
   </div>
 
   <div id="summaryBox" class="summary" hidden></div>
 
+  <div id="viewSearch" hidden></div>
+
   <div id="viewDay">
-    <div style="display:flex;flex-direction:column;gap:18px">
-      <div class="stats" id="stats"></div>
-      <form class="addrow" id="addForm">
-        <input type="text" id="addInput" placeholder="Ce faci azi? Scrie și apasă Enter" autocomplete="off">
-        <button class="primary" type="submit">Adaugă</button>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <form class="panel composer" id="addForm">
+        <div class="addrow"><input type="text" id="addInput" placeholder="Ce faci azi? Scrie și apasă Enter" autocomplete="off" aria-label="Activitate nouă"></div>
+        <div class="crow">
+          <label class="chip" title="Ziua în care apare activitatea">Ziua <input type="date" id="addDate" aria-label="Ziua activității"></label>
+          <button type="button" class="chip" id="addPin" aria-pressed="false"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M16 3a1 1 0 0 1 .7 1.7L15 6.4v4.2l2.7 2.7a1 1 0 0 1-.7 1.7h-4v5.5a1 1 0 0 1-2 0V15H7a1 1 0 0 1-.7-1.7L9 10.6V6.4L7.3 4.7A1 1 0 0 1 8 3h8z"/></svg>Fixează</button>
+          <button type="button" class="chip" id="addRec">↻ Fă-o recurentă</button>
+          <button class="primary" type="submit">Adaugă</button>
+        </div>
       </form>
-      <section class="sec-late" id="secLate"></section>
-      <section id="secToday"></section>
-      <section id="secIssues"></section>
-      <section id="secNotes"></section>
-      <section id="secLater"></section>
+      <div class="stats" id="stats"></div>
+      <div class="tl">
+        <section class="sec-late" id="secLate"></section>
+        <section id="secToday"></section>
+        <section id="secLater"></section>
+      </div>
     </div>
   </div>
 
@@ -346,20 +496,21 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
     </div>
   </div>
 
-  <footer class="foot">
-    <div class="swatches" role="group" aria-label="Culori">
-      <span class="hint">Culori:</span>
-      <button class="sw" data-act="pal" data-p="cupru" aria-label="Cupru pe grafit"><span style="background:linear-gradient(135deg,#000 50%,#E0915E 50%)"></span></button>
-      <button class="sw" data-act="pal" data-p="rosu" aria-label="Roșu"><span style="background:linear-gradient(135deg,#000 50%,#E5132E 50%)"></span></button>
-      <button class="sw" data-act="pal" data-p="noapte" aria-label="Noapte"><span style="background:linear-gradient(135deg,#000 50%,#B6A2FF 50%)"></span></button>
-    </div>
+  <footer class="foot" id="backupFoot">
     <div class="backup" id="backup" hidden>
       <button class="ghost" data-act="export">Descarcă backup</button>
       <label class="ghost" for="importFile" style="cursor:pointer">Încarcă backup</label>
       <input type="file" id="importFile" accept="application/json,.json" hidden>
     </div>
   </footer>
-  <div class="sync" id="sync"></div>
+ </div>
+
+ <aside class="rcol" aria-label="Calendar și rezumat">
+  <div class="panel box" id="calBox"></div>
+  <div class="panel box" id="weekBox"></div>
+  <section class="panel box" id="secIssues"></section>
+  <section class="panel box" id="secNotes"></section>
+ </aside>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -387,6 +538,7 @@ const $=id=>document.getElementById(id);
 
 let state={v:1,tasks:[],recurring:[],issues:[],notes:[]};
 let view=today(), tab="day", openPostpone=null, openNote=null, editing=null, recDraft=[1,2,3,4,5];
+let calMonth=null, q="", dateFor=null, addPinned=false;
 try{const raw=localStorage.getItem(LS);if(raw)state=normalize(JSON.parse(raw))}catch(e){}
 
 function normalize(s){
@@ -534,7 +686,10 @@ function render(){
   $("dayTitle").textContent=longDate(view).replace(/^./,c=>c.toUpperCase());
   $("todayBtn").disabled=isToday;
   $("tabDay").setAttribute("aria-selected",tab==="day");$("tabRec").setAttribute("aria-selected",tab==="rec");
-  $("viewDay").hidden=tab!=="day";$("viewRec").hidden=tab!=="rec";
+  $("viewDay").hidden=tab!=="day"||!!q;$("viewRec").hidden=tab!=="rec"||!!q;
+  $("viewSearch").hidden=!q;if(q)renderSearch();
+  if(dateFor!==view){dateFor=view;$("addDate").value=view}
+  $("addPin").setAttribute("aria-pressed",addPinned);
   $("addInput").placeholder=isToday?"Ce faci azi? Scrie și apasă Enter":"Adaugă activitate pentru "+shortDate(view);
 
   const {late,day}=dayLists(view);
@@ -580,8 +735,64 @@ function render(){
       <button class="mini" data-act="rdel" data-id="${r.id}">Șterge</button></li>`).join("")}</ul>`:"",
     "Nicio recurentă încă. Adaugă mai sus ce faci zilnic sau săptămânal: apar automat în lista zilei.");
 
+  renderCal();renderWeek();
+  const setN=(id,v)=>{const el=$(id);if(el)el.textContent=v?String(v):""};
+  const tl=dayLists(today());
+  setN("nAzi",tl.day.filter(t=>t.status!=="done").length+tl.late.length);
+  setN("nRec",state.recurring.length);
+  setN("nProb",state.issues.filter(i=>!i.resolved).length);
+  setN("nObs",state.notes.length);
+
   if(!$("summaryBox").hidden)renderSummary();
   if(editing){const el=$("edit-"+editing);if(el){el.focus();el.select()}}
+}
+
+/* ---------- calendar, cifrele săptămânii, căutare ---------- */
+function dayStatus(d){
+  const ts=state.tasks.filter(t=>t.date===d&&t.status!=="later");
+  if(!ts.length)return "";
+  if(ts.every(t=>t.status==="done"))return "done";
+  return d<today()?"late":"plan";
+}
+function renderCal(){
+  if(!calMonth)calMonth=view.slice(0,7);
+  const [y,m]=calMonth.split("-").map(Number);
+  const first=new Date(y,m-1,1),off=(first.getDay()+6)%7;
+  const start=new Date(y,m-1,1-off);
+  let cells="";
+  for(let i=0;i<42;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);
+    if(i>=35&&d.getMonth()!==m-1)break;
+    const k=ymd(d),st=dayStatus(k),wd=d.getDay();
+    const cls=[d.getMonth()!==m-1?"o":"",k===today()?"tdy":"",k===view&&k!==today()?"sel":"",(wd===0||wd===6)?"we":""].join(" ").trim();
+    cells+=`<button type="button" class="${cls}" data-act="cal" data-date="${k}" ${st?`data-s="${st}"`:""} aria-label="${longDate(k)}" ${k===view?'aria-current="date"':""}>${d.getDate()}</button>`;
+  }
+  $("calBox").innerHTML=`<div class="calnav"><button type="button" class="icon-btn" data-act="calm" data-dir="-1" aria-label="Luna anterioară">‹</button><span>${MONL[m-1].replace(/^./,c=>c.toUpperCase())} ${y}</span><button type="button" class="icon-btn" data-act="calm" data-dir="1" aria-label="Luna următoare">›</button></div>
+    <div class="cal">${["L","Ma","Mi","J","V","S","D"].map(h=>`<span class="h">${h}</span>`).join("")}${cells}</div>
+    <div class="legend"><span><i style="background:var(--done)"></i>totul gata</span><span><i style="background:var(--doing)"></i>de făcut / în lucru</span><span><i style="background:var(--late)"></i>a rămas ceva</span></div>`;
+}
+function renderWeek(){
+  const t0=today(),dow=(parse(t0).getDay()+6)%7,ws=addDays(t0,-dow),we=addDays(ws,6);
+  const done=state.tasks.filter(t=>t.status==="done"&&t.doneOn&&t.doneOn>=ws&&t.doneOn<=we).length;
+  const doing=state.tasks.filter(t=>t.status==="doing").length;
+  const late=dayLists(t0).late.length;
+  const later=state.tasks.filter(t=>t.status==="later"||(t.status!=="done"&&t.date&&t.date>t0)).length;
+  const planned=state.tasks.filter(t=>t.status!=="later"&&t.date&&t.date>=ws&&t.date<=t0);
+  const pct=planned.length?Math.round(planned.filter(t=>t.status==="done").length/planned.length*100):0;
+  $("weekBox").innerHTML=`<h3>Pe scurt <span>săptămâna asta</span></h3>
+    <div class="kpi"><div class="k g"><small>Terminate</small><b>${done}</b></div><div class="k a"><small>În lucru</small><b>${doing}</b></div>
+    <div class="k r"><small>Rămase din urmă</small><b>${late}</b></div><div class="k"><small>Amânate / planificate</small><b>${later}</b></div></div>
+    <div class="pbar"><i style="width:${pct}%"></i></div><div class="hint">${planned.length?`${pct}% din activitățile de săptămâna asta sunt gata`:"Nicio activitate planificată săptămâna asta încă"}</div>`;
+}
+function renderSearch(){
+  const n=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  const qq=n(q.trim());
+  const hits=state.tasks.filter(t=>n(t.title).includes(qq)||(t.note&&n(t.note).includes(qq)))
+    .sort((a,b)=>(b.date||"9999")<(a.date||"9999")?-1:1).slice(0,80);
+  const hl=txt=>{const i=n(txt).indexOf(qq);return i<0?esc(txt):esc(txt.slice(0,i))+"<mark>"+esc(txt.slice(i,i+qq.length))+"</mark>"+esc(txt.slice(i+qq.length))};
+  const col={todo:"var(--late)",doing:"var(--doing)",done:"var(--done)",later:"var(--muted)"};
+  $("viewSearch").innerHTML=`<section><div class="sec-head"><h2>Rezultate pentru „${esc(q.trim())}”</h2><span class="count">${hits.length}</span></div>
+    ${hits.length?`<div class="sres">${hits.map(t=>`<button type="button" data-act="goto" data-date="${t.date||""}" data-id="${t.id}"><span class="sd">${t.date?shortDate(t.date):"fără dată"}</span><i style="background:${col[t.status]||"var(--muted)"}"></i><span class="st">${hl(t.title)}${t.note?`<small>${hl(t.note)}</small>`:""}</span></button>`).join("")}</div>`:`<div class="empty">Nicio activitate nu conține „${esc(q.trim())}”.</div>`}</section>`;
 }
 
 /* ---------- rezumat ---------- */
@@ -621,6 +832,9 @@ document.addEventListener("click",e=>{
   switch(act){
     case "st": if(t){setStatus(t,b.dataset.s);commit()}break;
     case "edit": editing=id;render();break;
+    case "cal": view=b.dataset.date;tab="day";openPostpone=null;calMonth=view.slice(0,7);render();break;
+    case "calm": {const [y,m]=calMonth.split("-").map(Number);const d=new Date(y,m-1+(+b.dataset.dir),1);calMonth=d.getFullYear()+"-"+pad(d.getMonth()+1);renderCal();break}
+    case "goto": {q="";$("searchInput").value="";tab="day";if(b.dataset.date){view=b.dataset.date;calMonth=view.slice(0,7)}render();const el=document.querySelector(`li.task[data-id="${b.dataset.id}"]`);if(el)el.scrollIntoView({block:"center"});break}
     case "pin": if(t){if(t.pinned)delete t.pinned;else t.pinned=true;commit()}break;
     case "note": openNote=openNote===id?null:id;openPostpone=null;render();if(openNote){const ta=$("note-"+id);if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)}}break;
     case "noteclose": openNote=null;persist();render();break;
@@ -663,7 +877,9 @@ document.addEventListener("focusout",e=>{if(e.target.dataset&&e.target.dataset.e
 document.addEventListener("submit",e=>{
   e.preventDefault();
   if(e.target.id==="addForm"){const v=$("addInput").value.trim();if(!v)return;
-    state.tasks.push({id:uid(),title:v,date:view,status:"todo",createdAt:Date.now(),ord:nextOrd()});$("addInput").value="";commit();$("addInput").focus()}
+    const d=$("addDate").value||view;const nt={id:uid(),title:v,date:d,status:"todo",createdAt:Date.now(),ord:nextOrd()};
+    if(addPinned)nt.pinned=true;state.tasks.push(nt);$("addInput").value="";addPinned=false;
+    if(d!==view)toast("Adăugată pe "+shortDate(d));commit();$("addInput").focus()}
   if(e.target.id==="noteForm"){const v=$("noteInput").value.trim();if(!v)return;
     state.notes.push({id:uid(),text:v,date:today()});commit();$("noteInput").focus()}
   if(e.target.id==="issForm"){const v=$("issInput").value.trim();if(!v)return;
@@ -674,9 +890,15 @@ document.addEventListener("submit",e=>{
     genRecurring(today());commit();toast("Recurenta apare automat în zilele alese")}
 });
 
-$("prevDay").onclick=()=>{view=addDays(view,-1);openPostpone=null;render()};
-$("nextDay").onclick=()=>{view=addDays(view,1);openPostpone=null;render()};
-$("todayBtn").onclick=()=>{view=today();render()};
+$("prevDay").onclick=()=>{view=addDays(view,-1);openPostpone=null;calMonth=view.slice(0,7);render()};
+$("nextDay").onclick=()=>{view=addDays(view,1);openPostpone=null;calMonth=view.slice(0,7);render()};
+$("todayBtn").onclick=()=>{view=today();calMonth=view.slice(0,7);render()};
+$("addPin").onclick=()=>{addPinned=!addPinned;$("addPin").setAttribute("aria-pressed",addPinned)};
+$("addRec").onclick=()=>{const v=$("addInput").value.trim();tab="rec";render();$("recInput").value=v;$("addInput").value="";$("recInput").focus()};
+let qTimer=null;
+$("searchInput").addEventListener("input",e=>{clearTimeout(qTimer);qTimer=setTimeout(()=>{q=e.target.value.trim()?e.target.value:"";render()},120)});
+$("searchInput").addEventListener("focus",()=>{const a=$("swAct");if(a&&a.getAttribute("aria-selected")!=="true")a.click()});
+$("searchInput").addEventListener("keydown",e=>{if(e.key==="Escape"){e.target.value="";q="";render()}});
 $("tabDay").onclick=()=>{tab="day";render()};
 $("tabRec").onclick=()=>{tab="rec";render()};
 $("summaryBtn").onclick=()=>{const box=$("summaryBox");box.hidden=!box.hidden;if(!box.hidden)renderSummary()};
@@ -1274,6 +1496,45 @@ document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...setti
 })();
 })();
 </script>
+<script>
+/* ---------- meniul din stânga: comută între Activități și Pariuri și între secțiuni ---------- */
+(function(){
+  const $=id=>document.getElementById(id);
+  const clearSearch=()=>{const si=$("searchInput");if(si&&si.value){si.value="";si.dispatchEvent(new Event("input"));si.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape"}))}};
+  const act={
+    azi:()=>{$("swAct").click();clearSearch();$("tabDay").click();if(!$("todayBtn").disabled)$("todayBtn").click();scrollTo(0,0)},
+    recurente:()=>{$("swAct").click();clearSearch();$("tabRec").click();scrollTo(0,0)},
+    probleme:()=>{$("swAct").click();clearSearch();$("tabDay").click();$("secIssues").scrollIntoView({behavior:"smooth",block:"start"})},
+    observatii:()=>{$("swAct").click();clearSearch();$("tabDay").click();$("secNotes").scrollIntoView({behavior:"smooth",block:"start"})},
+    bilete:()=>{$("swBet").click();$("btTabBets").click()},
+    statistici:()=>{$("swBet").click();$("btTabStats").click()},
+    notite:()=>{$("swBet").click();$("btTabNotes").click()}
+  };
+  document.querySelectorAll(".nav[data-nav]").forEach(b=>b.addEventListener("click",()=>{act[b.dataset.nav]();sync()}));
+  function current(){
+    if(!$("btApp").hidden){
+      if($("btTabStats").getAttribute("aria-selected")==="true")return "statistici";
+      if($("btTabNotes").getAttribute("aria-selected")==="true")return "notite";
+      return "bilete";
+    }
+    return $("tabRec").getAttribute("aria-selected")==="true"?"recurente":"azi";
+  }
+  function sync(){
+    const c=current();
+    document.querySelectorAll(".nav[data-nav]").forEach(b=>{if(b.dataset.nav===c)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
+    const badge=$("swBetBadge"),n=$("nBil");if(n)n.textContent=badge&&!badge.hidden?badge.textContent:"";
+    const cur=document.querySelector('.nav[aria-current="page"]');
+    if(cur&&matchMedia("(max-width:859px)").matches){const nl=$("navlist");const r=cur.getBoundingClientRect(),nr=nl.getBoundingClientRect();if(r.left<nr.left||r.right>nr.right)nl.scrollBy({left:r.left-nr.left-16})}
+  }
+  const mo=new MutationObserver(sync);
+  ["app","btApp"].forEach(id=>mo.observe($(id),{attributes:true,attributeFilter:["hidden"]}));
+  ["tabRec","tabDay","btTabBets","btTabStats","btTabNotes"].forEach(id=>mo.observe($(id),{attributes:true,attributeFilter:["aria-selected"]}));
+  mo.observe($("swBetBadge"),{attributes:true,childList:true,characterData:true,subtree:true});
+  sync();
+})();
+</script>
+</main>
+</div>
 
 </body>
 </html>
