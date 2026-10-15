@@ -354,6 +354,8 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .bt-note .txt{font-size:14px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
 .bt-form{display:flex;flex-direction:column;gap:12px}
 .bt-note-act{display:flex;gap:14px}
+.bt-tx .l1{align-items:center}
+.bt-stat2 .v.pos{color:var(--done)} .bt-stat2 .v.neg{color:var(--late)}
 .bt-del{color:var(--late)}
 .bt-note-edit{font-size:16px;background:var(--soft);border:1px solid var(--accent);border-radius:9px;padding:10px 12px;width:100%;color:var(--ink);font-family:inherit}
 .bt-export-text{font-family:var(--f-mono);font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:9px;padding:8px;color:var(--ink);width:100%}
@@ -382,6 +384,7 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
     <button type="button" class="nav" data-nav="bilete"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4zM14 5v12"/></svg><span>Bilete</span><span class="n" id="nBil"></span></button>
     <button type="button" class="nav" data-nav="statistici"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Statistici</span></button>
     <button type="button" class="nav" data-nav="notite"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l5 5v13H6zM14 3v6h6"/></svg><span>Notițe echipe</span></button>
+    <button type="button" class="nav" data-nav="bani"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v12H3zM3 11h18M16 15h2"/></svg><span>Bani</span></button>
   </nav>
   <div class="sfoot">
     <div class="swatches" role="group" aria-label="Temă">
@@ -894,7 +897,7 @@ document.addEventListener("click",e=>{
       try{navigator.clipboard.writeText(txt).then(done,()=>selectSum())}catch(err){selectSum()}break}
     case "sumclose": $("summaryBox").hidden=true;break;
     case "pal": setPalette(b.dataset.p);break;
-    case "export": {let pariuri={};try{pariuri={bets:JSON.parse(localStorage.getItem("bt-bets")||"[]"),settings:JSON.parse(localStorage.getItem("bt-settings")||"{}"),notite:JSON.parse(localStorage.getItem("bt-notes")||"{}")}}catch(err){}
+    case "export": {let pariuri={};try{pariuri={bets:JSON.parse(localStorage.getItem("bt-bets")||"[]"),settings:JSON.parse(localStorage.getItem("bt-settings")||"{}"),notite:JSON.parse(localStorage.getItem("bt-notes")||"{}"),tranzactii:JSON.parse(localStorage.getItem("bt-txns")||"[]")}}catch(err){}
       const blob=new Blob([JSON.stringify({...state,pariuri},null,1)],{type:"application/json"});
       const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="jurnal-sedinta-"+today()+".json";
       document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast("Backup descărcat");break}
@@ -1013,7 +1016,7 @@ $("importFile").addEventListener("change",e=>{
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
   r.onload=()=>{try{const prev=state;const data=JSON.parse(r.result);state=normalize(data);commit();
-      if(data.pariuri&&Array.isArray(data.pariuri.bets)){try{localStorage.setItem("bt-bets",JSON.stringify(data.pariuri.bets));localStorage.setItem("bt-settings",JSON.stringify(data.pariuri.settings||{}));if(data.pariuri.notite)localStorage.setItem("bt-notes",JSON.stringify(data.pariuri.notite))}catch(err){}document.dispatchEvent(new Event("bt-reload"))}
+      if(data.pariuri&&Array.isArray(data.pariuri.bets)){try{localStorage.setItem("bt-bets",JSON.stringify(data.pariuri.bets));localStorage.setItem("bt-settings",JSON.stringify(data.pariuri.settings||{}));if(data.pariuri.notite)localStorage.setItem("bt-notes",JSON.stringify(data.pariuri.notite));if(data.pariuri.tranzactii)localStorage.setItem("bt-txns",JSON.stringify(data.pariuri.tranzactii))}catch(err){}document.dispatchEvent(new Event("bt-reload"))}
       toast("Backup încărcat",()=>{state=prev;commit()})}catch(err){toast("Fișierul nu e un backup valid al jurnalului")}
     e.target.value=""};
   r.readAsText(f);
@@ -1051,12 +1054,14 @@ connect();
       <button class="tab" role="tab" id="btTabBets" aria-selected="true" type="button">Pariuri</button>
       <button class="tab" role="tab" id="btTabStats" aria-selected="false" type="button">Statistici</button>
       <button class="tab" role="tab" id="btTabNotes" aria-selected="false" type="button">Notițe</button>
+      <button class="tab" role="tab" id="btTabMoney" aria-selected="false" type="button">Bani</button>
     </div>
   </div>
   <div class="bt-chips" id="btFilters" aria-label="Perioadă"></div>
   <section id="btViewBets" class="bt-list"></section>
   <section id="btViewStats" class="bt-list" hidden></section>
   <section id="btViewNotes" class="bt-list" hidden></section>
+  <section id="btViewMoney" class="bt-list" hidden></section>
   <div class="sync" id="btSync"></div>
 </div>
 <button class="bt-fab" id="btFab" type="button">+ Pariu</button>
@@ -1113,7 +1118,11 @@ const settled=b=>b.result!=="pending";
 /* bankroll disponibil: miza unui pariu în așteptare iese din bankroll până afli rezultatul;
    câștigat → revine miza × cota, pierdut → miza rămâne scăzută, anulat → revine miza */
 const pendingStake=list=>list.filter(b=>b.result==="pending").reduce((a,b)=>a+n(b.stake),0);
-const bankNow=()=>n(settings.bankroll)+summarize(bets).profit-pendingStake(bets);
+const LSX="bt-txns";
+let txns=lsGet(LSX,[]);
+/* depuneri și bonusuri intră în bankroll, retragerile ies */
+const txNet=()=>txns.reduce((a,t)=>a+(t.type==="ret"?-1:1)*n(t.amount),0);
+const bankNow=()=>n(settings.bankroll)+txNet()+summarize(bets).profit-pendingStake(bets);
 function fmt(v,sign){const s=Math.abs(v).toLocaleString("ro-RO",{minimumFractionDigits:2,maximumFractionDigits:2});return (sign?(v>0?"+":v<0?"−":""):(v<0?"−":""))+s+" "+settings.currency}
 const pct=v=>(v>0?"+":"")+v.toLocaleString("ro-RO",{maximumFractionDigits:1})+"%";
 const sortBets=a=>a.slice().sort((x,y)=>(y.date||"").localeCompare(x.date||"")||n(y.createdAt)-n(x.createdAt));
@@ -1143,12 +1152,14 @@ function render(){
   const pend=all.filter(b=>b.result==="pending").length;
   const badge=$("swBetBadge");badge.textContent=pend;badge.hidden=!pend;
   spark(all);alerts(all);filters();
-  $("btViewBets").hidden=tab!=="bets";$("btViewStats").hidden=tab!=="stats";$("btViewNotes").hidden=tab!=="notes";$("btFilters").hidden=tab==="notes";
-  $("btTabBets").setAttribute("aria-selected",tab==="bets");$("btTabStats").setAttribute("aria-selected",tab==="stats");$("btTabNotes").setAttribute("aria-selected",tab==="notes");
+  $("btViewBets").hidden=tab!=="bets";$("btViewStats").hidden=tab!=="stats";$("btViewNotes").hidden=tab!=="notes";$("btViewMoney").hidden=tab!=="money";$("btFilters").hidden=tab==="notes"||tab==="money";
+  $("btTabBets").setAttribute("aria-selected",tab==="bets");$("btTabStats").setAttribute("aria-selected",tab==="stats");$("btTabNotes").setAttribute("aria-selected",tab==="notes");$("btTabMoney").setAttribute("aria-selected",tab==="money");
   if(tab==="bets")renderBets(view);else if(tab==="stats")renderStats(view,s);
 }
 function spark(all){
-  let v=n(settings.bankroll);const pts=[v];all.filter(settled).slice().reverse().forEach(b=>{v+=profit(b);pts.push(v)});const ip=pendingStake(all);if(ip)pts.push(v-ip);
+  let v=n(settings.bankroll);const pts=[v];
+  const ev=[...all.filter(settled).map(b=>({d:b.date||"",c:n(b.createdAt),x:profit(b)})),...txns.map(t=>({d:t.date||"",c:n(t.createdAt),x:(t.type==="ret"?-1:1)*n(t.amount)}))].sort((a,b)=>a.d.localeCompare(b.d)||a.c-b.c);
+  ev.forEach(e=>{v+=e.x;pts.push(v)});const ip=pendingStake(all);if(ip)pts.push(v-ip);
   const svg=$("btSpark");
   if(pts.length<2){svg.innerHTML='<line x1="0" y1="32" x2="300" y2="32" stroke="currentColor" stroke-opacity=".4" stroke-dasharray="4 4"/>';return}
   const min=Math.min(...pts),max=Math.max(...pts),r=(max-min)||1;
@@ -1455,6 +1466,61 @@ function renderNotes(){
   el.querySelectorAll("[data-nk]").forEach(b=>b.onclick=()=>{const [c,t]=b.dataset.nk.split("|");noteCountry=c;noteTeam=t;noteEdit=noteDel=null;renderNotes();window.scrollTo({top:$("btViewNotes").offsetTop-80,behavior:"smooth"})});
 }
 
+
+/* ---------- Bani: depuneri, retrageri, bonusuri ---------- */
+const TX={dep:"Depunere",bonus:"Bonus",ret:"Retragere"};
+let txCol=null, txType="dep", txDel=null;
+const txSign=t=>t.type==="ret"?-1:1;
+function moneySummary(list){
+  const s={dep:0,ret:0,bonus:0};list.forEach(t=>{s[t.type]=(s[t.type]||0)+n(t.amount)});return s;
+}
+async function saveTx(t){
+  const i=txns.findIndex(x=>x.id===t.id);i>=0?txns[i]=t:txns.push(t);lsSet(LSX,txns);render();renderMoney();
+  if(txCol){try{const {id,...body}=t;await txCol.doc(t.id).set(body)}catch(e){toast("Nu am putut salva online. Rămâne în acest browser.")}}
+}
+async function removeTx(id){
+  txns=txns.filter(x=>x.id!==id);lsSet(LSX,txns);render();renderMoney();
+  if(txCol){try{await txCol.doc(id).delete()}catch(e){toast("Nu am putut șterge online.")}}
+}
+function renderMoney(){
+  const el=$("btViewMoney");if(tab!=="money")return;
+  const s=moneySummary(txns),betP=summarize(bets).profit;
+  const list=txns.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||n(b.createdAt)-n(a.createdAt));
+  const books=[...new Set([...bets.map(b=>b.book),...txns.map(t=>t.book)].filter(Boolean))];
+  const hint={dep:"ex. 100",bonus:"ex. 25 (freebet, cashback…)",ret:"ex. 150"}[txType];
+  el.innerHTML=`<div class="bt-card"><h2>Bani</h2><div class="bt-stat2">
+      <div><span class="lbl">Depus total</span><span class="v">${fmt(s.dep)}</span></div>
+      <div><span class="lbl">Retras total</span><span class="v">${fmt(s.ret)}</span></div>
+      <div><span class="lbl">Bonusuri primite</span><span class="v pos">${fmt(s.bonus)}</span></div>
+      <div><span class="lbl">Profit din pariuri</span><span class="v ${betP>0?"pos":betP<0?"neg":""}">${fmt(betP,true)}</span></div>
+    </div>
+    <p class="bt-hint">Depunerile și bonusurile cresc bankroll-ul, retragerile îl scad.</p></div>
+  <form class="bt-card bt-form" id="btxForm" novalidate>
+    <div class="bt-seg" id="btxType">${Object.entries(TX).map(([k,l])=>`<button type="button" aria-pressed="${txType===k}" data-v="${k}">${l}</button>`).join("")}</div>
+    <div class="bt-two">
+      <label class="bt-field"><span>Suma (${esc(settings.currency)})</span><input id="btxAmount" inputmode="decimal" placeholder="${hint}" autocomplete="off"></label>
+      <label class="bt-field"><span>Data</span><input id="btxDate" type="date" value="${today()}"></label>
+    </div>
+    <label class="bt-field"><span>Casa de pariuri</span><input id="btxBook" list="btxdlBook" placeholder="Superbet…" value="${esc((list[0]||{}).book||(sortBets(bets).find(b=>!b.example&&b.book)||{}).book||"")}" autocomplete="off"></label>
+    <datalist id="btxdlBook">${books.map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
+    <label class="bt-field"><span>Notă</span><input id="btxNote" placeholder="${txType==="bonus"?"ex. freebet 25 lei, cotă minimă 1.50":"opțional"}" autocomplete="off"></label>
+    <div id="btxErr" class="bt-warn" hidden></div>
+    <div class="bt-actions"><button class="bt-btn" type="submit">Adaugă ${TX[txType].toLowerCase()}</button></div>
+  </form>
+  <h2>Istoric</h2>
+  ${list.length?list.map(t=>`<div class="bt-note bt-tx"><span class="l1"><b>${TX[t.type]||t.type}</b><span class="bt-pl ${t.type==="ret"?"neg":"pos"}" style="font-size:17px">${t.type==="ret"?"−":"+"}${fmt(n(t.amount))}</span></span>
+      <span class="l1"><span>${esc(fmtDate(t.date))}${t.book?" · "+esc(t.book):""}</span><button type="button" class="bt-link bt-del" data-txdel="${t.id}">${txDel===t.id?"Sigur ștergi?":"Șterge"}</button></span>
+      ${t.note?`<span class="txt">${esc(t.note)}</span>`:""}</div>`).join("")
+    :`<div class="bt-empty">Nicio tranzacție încă. Adaugă prima depunere mai sus.</div>`}`;
+  $("btxType").querySelectorAll("button").forEach(b=>b.onclick=()=>{txType=b.dataset.v;renderMoney()});
+  $("btxForm").onsubmit=async ev=>{ev.preventDefault();
+    const amount=n(String($("btxAmount").value).replace(",","."));
+    if(!(amount>0)){$("btxErr").textContent="Introdu suma.";$("btxErr").hidden=false;$("btxAmount").focus();return}
+    await saveTx({id:"t"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),type:txType,amount:Math.round(amount*100)/100,date:$("btxDate").value||today(),book:$("btxBook").value.trim(),note:$("btxNote").value.trim(),createdAt:Date.now()});
+    toast(TX[txType]+(txType==="bonus"?" adăugat":" adăugată"));};
+  el.querySelectorAll("[data-txdel]").forEach(b=>b.onclick=()=>{const id=b.dataset.txdel;if(txDel!==id){txDel=id;renderMoney();return}txDel=null;removeTx(id);toast("Tranzacție ștearsă")});
+}
+
 /* ---------- Export pariuri ---------- */
 const inClaude=!!(window.claude&&window.claude.use&&!window.claude.__firebase);
 function betsCSV(list){
@@ -1486,7 +1552,8 @@ function openExport(){
     $("bteMonth").onchange=e=>{sel=e.target.value;draw()};
     $("bteClose").onclick=closeSheet;
     const label=sel==="all"?"toate pariurile":mName(sel);
-    const text=()=>`Pariurile mele, ${label} (bankroll inițial ${fmt(n(settings.bankroll))}, bankroll acum ${fmt(bankNow())}):\n`+betsCSV(list);
+    const tx=txns.filter(t=>sel==="all"||monthKey(t.date)===sel),ms=moneySummary(tx);
+    const text=()=>`Pariurile mele, ${label} (bankroll inițial ${fmt(n(settings.bankroll))}, bankroll acum ${fmt(bankNow())}; în perioadă: depuneri ${fmt(ms.dep)}, bonusuri ${fmt(ms.bonus)}, retrageri ${fmt(ms.ret)}):\n`+betsCSV(list)+(tx.length?"\n\nTranzacții:\nData;Tip;Suma;Casa;Notă\n"+tx.map(t=>[t.date,TX[t.type],(t.type==="ret"?"-":"")+n(t.amount).toFixed(2).replace(".",","),t.book||"",(t.note||"").replace(/;/g,",")].join(";")).join("\n"):"");
     $("bteCopy").onclick=()=>{const t=text(),btn=$("bteCopy");
       const fallback=()=>{const ta=$("bteText");ta.value=t;ta.hidden=false;ta.focus();ta.select();btn.textContent="Selectat: copiază manual"};
       try{navigator.clipboard.writeText(t).then(()=>{btn.textContent="Copiat";toast("Copiat. Lipește-l în chat.")},fallback)}catch(e){fallback()}};
@@ -1505,12 +1572,13 @@ $("btPasteBtn").onclick=openPaste;
 $("btTabBets").onclick=()=>{tab="bets";render()};
 $("btTabStats").onclick=()=>{tab="stats";render()};
 $("btTabNotes").onclick=()=>{tab="notes";render();renderNotes()};
+$("btTabMoney").onclick=()=>{tab="money";render();renderMoney()};
 $("btExportBtn").onclick=openExport;
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("btSheet").hidden)closeSheet()});
 
 bets=lsGet(LSB,[]);settings={...settings,...lsGet(LSS,{})};
 render();
-document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...settings,...lsGet(LSS,{})};notes=normNotes(lsGet(LSN,{}));render();if(tab==="notes")renderNotes();if(notesRef)notesRef.set({notes}).catch(()=>{})});
+document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...settings,...lsGet(LSS,{})};notes=normNotes(lsGet(LSN,{}));txns=lsGet(LSX,[]);render();renderMoney();if(tab==="notes")renderNotes();if(notesRef)notesRef.set({notes}).catch(()=>{})});
 (async()=>{
   if(!window.claude||!window.claude.use){$("btSync").textContent="Salvat în acest browser";return}
   try{
@@ -1520,6 +1588,14 @@ document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...setti
     col=db.collection("data/users/"+uidv+"/betdata/bets");
     setRef=db.doc("data/users/"+uidv+"/betsettings");
     notesRef=db.doc("data/users/"+uidv+"/betnotes");
+    txCol=db.collection("data/users/"+uidv+"/betdata/txns");
+    let firstTx=true;
+    txCol.onSnapshot(s=>{
+      if(firstTx){firstTx=false;const local=lsGet(LSX,[]);
+        if(s.empty&&local.length){local.forEach(t=>{const {id,...body}=t;txCol.doc(id).set(body).catch(()=>{})});return}}
+      txns=s.docs.map(d=>({id:d.id,...d.data()}));lsSet(LSX,txns);render();
+      const ae=document.activeElement;if(!(ae&&ae.closest&&ae.closest("#btxForm")))renderMoney();
+    });
     notesRef.onSnapshot(s=>{
       if(!s.exists){if(Object.keys(notes).length)notesRef.set({notes}).catch(()=>{});return}
       if(noteTimer||s.metadata.hasPendingWrites)return;
@@ -1550,13 +1626,15 @@ document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...setti
     observatii:()=>{$("swAct").click();clearSearch();$("tabDay").click();$("secNotes").scrollIntoView({behavior:"smooth",block:"start"})},
     bilete:()=>{$("swBet").click();$("btTabBets").click()},
     statistici:()=>{$("swBet").click();$("btTabStats").click()},
-    notite:()=>{$("swBet").click();$("btTabNotes").click()}
+    notite:()=>{$("swBet").click();$("btTabNotes").click()},
+    bani:()=>{$("swBet").click();$("btTabMoney").click()}
   };
   document.querySelectorAll(".nav[data-nav]").forEach(b=>b.addEventListener("click",()=>{act[b.dataset.nav]();sync()}));
   function current(){
     if(!$("btApp").hidden){
       if($("btTabStats").getAttribute("aria-selected")==="true")return "statistici";
       if($("btTabNotes").getAttribute("aria-selected")==="true")return "notite";
+      if($("btTabMoney").getAttribute("aria-selected")==="true")return "bani";
       return "bilete";
     }
     if($("tabDone").getAttribute("aria-selected")==="true")return "finalizate";
@@ -1571,7 +1649,7 @@ document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...setti
   }
   const mo=new MutationObserver(sync);
   ["app","btApp"].forEach(id=>mo.observe($(id),{attributes:true,attributeFilter:["hidden"]}));
-  ["tabRec","tabDay","tabDone","btTabBets","btTabStats","btTabNotes"].forEach(id=>mo.observe($(id),{attributes:true,attributeFilter:["aria-selected"]}));
+  ["tabRec","tabDay","tabDone","btTabBets","btTabStats","btTabNotes","btTabMoney"].forEach(id=>mo.observe($(id),{attributes:true,attributeFilter:["aria-selected"]}));
   mo.observe($("swBetBadge"),{attributes:true,childList:true,characterData:true,subtree:true});
   sync();
 })();

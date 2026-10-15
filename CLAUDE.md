@@ -12,6 +12,8 @@ Pariurile: în Claude stau în `data/users/<id>/betdata/bets` și `data/users/<i
 - Sub-tabul **Notițe**: țară → echipă → oricâte notițe separate (adaugă / editează / șterge). Lista de echipe e `LEAGUES` în cod, sezonul **2026–27**
   (La Liga, Premier League, SuperLiga, Serie A, Ligue 1, Pro League (18 echipe), Bundesliga, Primeira Liga). Actualizează-o vara, după promovări/retrogradări.
   Stocare: doc `data/users/<id>/betnotes` = `{notes:{"RO|FCSB":{items:[{id,t,u}]}}}` (formatul vechi `{t,u}` e convertit de `normNotes`); local `bt-notes`; intră în backup ca `pariuri.notite`.
+- Sub-tabul **Bani**: depuneri, bonusuri, retrageri. Colecția `data/users/<id>/betdata/txns` ({type:dep|bonus|ret, amount, date, book, note}); local `bt-txns`; backup `pariuri.tranzactii`.
+  Bankroll curent = bankroll inițial + depuneri + bonusuri − retrageri + profit pariuri − mize în așteptare.
 - Butonul **Export**: alege luna → „Copiază pentru Claude” (CSV cu `;` + bankroll, de lipit în chat pentru analiză) sau, pe GitHub, descarcă CSV (Excel, zecimale cu virgulă).
 
 ## Lipește bilet (tab Pariuri)
