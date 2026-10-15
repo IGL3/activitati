@@ -127,6 +127,115 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);fo
 .sres i{width:8px;height:8px;border-radius:50%;flex:none}
 .top .daynav .primary{margin-left:6px}
 .foot:has(#backup[hidden]){display:none}
+/* ---------- telefon: aspect de aplicație (cartonașe compacte, bară jos, foi care urcă de jos) ---------- */
+.m-only{display:none!important}
+@media (max-width:859px){
+  .m-only{display:revert!important}
+  .navlist,.sfoot{display:none!important}
+  .search{display:none!important}
+  html.msearch .search{display:block!important;order:2}
+  html[data-mv="menu"] .sfoot{display:flex!important;order:4;border-top:0;padding:4px 2px 120px}
+  .brand{display:none}
+  .shell{padding-block:0 0}
+  .maincol{padding-bottom:120px;gap:12px}
+  /* antet */
+  .maincol .top{position:relative;margin-inline:-16px;padding:14px 16px 4px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 22%,#000) 0%,var(--bg) 100%);flex-wrap:nowrap;align-items:flex-start}
+  :root[data-palette="rosu"] .maincol .top{background:linear-gradient(180deg,#2A0307 0%,var(--bg) 100%)}
+  .maincol .top h1{font-size:25px}
+  .maincol .top .daynav{display:none}
+  .maincol .top>div:first-child{min-width:0}
+  .mhead{display:flex!important;gap:8px;flex:none}
+  .mhead button{width:40px;height:40px;border-radius:12px;background:var(--soft);border:1px solid var(--line);display:grid;place-items:center;color:var(--ink);padding:0}
+  .mhead button.acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .mhead button[aria-pressed="true"]{border-color:var(--ink)}
+  .mweek{display:grid!important;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:-4px}
+  .mweek button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0 6px;border-radius:12px;font:12px var(--f-mono);color:var(--muted);background:transparent;border:1px solid transparent}
+  .mweek button b{font:600 16px var(--f-body);color:var(--ink)}
+  .mweek button i{width:5px;height:5px;border-radius:50%;background:transparent}
+  .mweek button[data-s="done"] i{background:var(--done)}.mweek button[data-s="plan"] i{background:var(--doing)}.mweek button[data-s="late"] i{background:var(--late)}
+  .mweek button.tdy{border-color:var(--line)}
+  .mweek button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .mweek button.on b{color:var(--accent-ink)}.mweek button.on i{background:var(--accent-ink)!important}
+  .mprog{display:flex!important;align-items:center;gap:10px;font:12px var(--f-mono);color:var(--muted)}
+  .mprog .bar{flex:1;height:6px;border-radius:9px;background:var(--soft);overflow:hidden;display:flex}
+  .mprog .bar span{height:100%}
+  #addForm,#stats{display:none!important}
+  /* listă fără linia de timp */
+  .tl{gap:10px}
+  .tl>section{padding-left:0}
+  .tl>section::before,.tl .sec-head::before,.tl .task::before{display:none}
+  .tl .sec-head h2{font-size:16px}
+  /* cartonașe compacte */
+  .shell li.task,.shell li.task.has-move{grid-template-columns:30px minmax(0,1fr) auto;gap:6px 10px;padding:10px 4px 10px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);position:relative;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  .shell .task::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--line)}
+  .shell .task.st-todo::after{background:var(--late)}.shell .task.st-doing::after{background:var(--doing)}.shell .task.st-done::after{background:var(--done)}
+  .shell .task.st-doing{background:linear-gradient(90deg,color-mix(in srgb,var(--doing) 12%,var(--surface)),var(--surface) 65%)}
+  .shell .task.is-late{border-left-width:1px}
+  .shell .task .grip,.shell .task .actions,.shell .task .pin-flag{display:none}
+  .shell .task .main{grid-column:2}
+  .shell .task .title{font-size:15px;font-weight:500;cursor:pointer}
+  .shell .task .meta{gap:6px;font-size:11px}
+  .shell .task .tag{background:transparent;padding:0}
+  .shell .task .tag.late{color:var(--late)}
+  .shell .task .note{-webkit-line-clamp:1;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;font-size:12.5px}
+  .mck{grid-column:1;width:28px;height:28px;border-radius:50%;border:2px solid #4a4a52;background:transparent;display:grid!important;place-items:center;padding:0;color:#000}
+  .st-doing .mck{border-color:var(--doing);background:conic-gradient(var(--doing) 0 50%,transparent 50%)}
+  .st-done .mck{border-color:var(--done);background:var(--done)}
+  .st-later .mck{border-style:dashed}
+  .mmore{grid-column:3;width:40px;height:40px;border:0;background:transparent;color:var(--muted);font-size:20px;letter-spacing:1px;padding:0;display:grid!important;place-items:center}
+  .shell .task .note-box,.shell .task .postpone{grid-column:1/-1}
+  .shell .task.lp{box-shadow:0 0 0 2px var(--accent)}
+  /* vederi: Azi | Note | Meniu */
+  html:not([data-mv="note"]):not([data-mv="menu"]) .rcol{display:none}
+  html[data-mv="note"] .maincol,html[data-mv="menu"] .maincol{display:none}
+  html[data-mv="note"] #calBox,html[data-mv="note"] #weekBox,html[data-mv="note"] #mmenu{display:none!important}
+  html[data-mv="menu"] #secIssues,html[data-mv="menu"] #secNotes{display:none}
+  .rcol{padding-top:14px;padding-bottom:20px}
+  html[data-mv="note"] .rcol{padding-bottom:120px}
+  .mtitle{font:700 26px/1.1 var(--f-display);margin:0 0 2px}
+  #mmenu{display:flex!important;flex-direction:column;gap:10px}
+  .mrows{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .mrows button{display:flex;align-items:center;gap:12px;padding:14px;border:0;border-top:1px solid var(--line);background:transparent;color:var(--ink);font:500 15px var(--f-body);text-align:left;width:100%}
+  .mrows button:first-child{border-top:0}
+  .mrows svg{color:var(--muted);flex:none}
+  .mrows .v{margin-left:auto;color:var(--muted);font:12px var(--f-mono)}
+  /* bara de jos */
+  .mbar{display:grid!important;position:fixed;left:0;right:0;bottom:0;z-index:12;grid-template-columns:repeat(5,1fr);align-items:start;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));background:rgba(10,10,12,.96);border-top:1px solid var(--line);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  .mbar button{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:transparent;color:var(--muted);font:500 11px var(--f-body);padding:4px 0;position:relative}
+  .mbar button[aria-current="page"]{color:var(--accent)}
+  .mbar .badge2{position:absolute;top:0;left:calc(50% + 6px);background:var(--accent);color:var(--accent-ink);font:600 10px var(--f-mono);border-radius:9px;padding:0 5px;min-width:16px}
+  .mbar .badge2:empty{display:none}
+  .mbar .fab{width:56px;height:56px;border-radius:18px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:30px;font-weight:300;margin-top:-26px;box-shadow:0 8px 24px color-mix(in srgb,var(--accent) 40%,transparent);line-height:1}
+  .bt-fab{display:none}
+  body .toast,body .bt-toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+  button,label{-webkit-tap-highlight-color:transparent}
+  /* foi care urcă de jos */
+  .mscrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:30}
+  .msheet{position:fixed;left:0;right:0;bottom:0;z-index:31;background:#141417;border-top:1px solid var(--line);border-radius:24px 24px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom,0px));display:flex!important;flex-direction:column;gap:12px;max-height:88%;overflow-y:auto}
+  .msheet[hidden]{display:none!important}
+  .msheet .grab{width:42px;height:5px;border-radius:5px;background:#3a3a40;margin:0 auto 2px}
+  .msheet .sh-t{font:600 19px var(--f-display);overflow-wrap:anywhere}
+  .seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .seg3 button{border:1px solid var(--line);border-radius:12px;padding:12px 0;font-weight:600;color:var(--muted);background:var(--soft)}
+  .seg3 .s-todo[aria-pressed="true"]{background:var(--late-bg);color:var(--late);border-color:var(--late)}
+  .seg3 .s-doing[aria-pressed="true"]{background:var(--doing-bg);color:var(--doing);border-color:var(--doing)}
+  .seg3 .s-done[aria-pressed="true"]{background:var(--done-bg);color:var(--done);border-color:var(--done)}
+  .srows{display:flex;flex-direction:column;background:var(--soft);border-radius:14px;overflow:hidden}
+  .srows>button,.srows>.sub{display:flex;align-items:center;gap:12px;padding:13px 14px;border:0;border-top:1px solid var(--line);background:transparent;color:var(--ink);font:500 15px var(--f-body);text-align:left;width:100%}
+  .srows>:first-child{border-top:0}
+  .srows svg{color:var(--muted);flex:none}
+  .srows .v{margin-left:auto;color:var(--muted);font-size:13px}
+  .srows .del{color:var(--late)}.srows .del svg{color:var(--late)}
+  .srows .sub{flex-wrap:wrap;gap:8px;padding-top:4px}
+  .srows .sub button,.chips2 button,.chips2 label{border:1px solid var(--line);background:transparent;border-radius:999px;padding:8px 13px;font-size:14px;color:#C9C9CE;display:inline-flex;gap:6px;align-items:center}
+  .chips2{display:flex;flex-wrap:wrap;gap:6px}
+  .chips2 [aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+  .srows .sub input[type=date],.chips2 input[type=date]{border:0;background:transparent;color:inherit;font:inherit;padding:0;color-scheme:dark;max-width:130px}
+  .msheet .minp{width:100%;background:#000;border:1px solid var(--accent);border-radius:12px;padding:13px 14px;font-size:16px;color:var(--ink)}
+  .msheet .big{width:100%;padding:14px;border-radius:14px;font-size:16px}
+  .msheet form{display:flex;flex-direction:column;gap:12px}
+}
+
 /* finalizate */
 .dgrp{font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:8px;display:flex;justify-content:space-between}
 .dlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
@@ -397,6 +506,15 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
     <div class="sync" id="sync"></div>
   </div>
 </aside>
+<nav class="mbar m-only" id="mbar" aria-label="Navigare">
+  <button type="button" data-mb="azi"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Azi<span class="badge2" id="mbAzi"></span></button>
+  <button type="button" data-mb="finalizate"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/></svg>Finalizate</button>
+  <button type="button" data-mb="add" aria-label="Adaugă"><span class="fab">+</span></button>
+  <button type="button" data-mb="note"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v12H8l-4 4z"/></svg>Note<span class="badge2" id="mbNote"></span></button>
+  <button type="button" data-mb="pariuri"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4zM14 5v12"/></svg>Pariuri<span class="badge2" id="mbBil"></span></button>
+</nav>
+<div class="mscrim" id="mscrim" hidden></div>
+<div class="msheet" id="msheet" hidden role="dialog" aria-modal="true"></div>
 <main class="content">
 <nav class="appbar" aria-label="Aplicații" hidden><div class="appbar-in" role="tablist">
   <button type="button" role="tab" id="swAct" aria-selected="true">Activități</button>
@@ -461,6 +579,11 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
       <div class="eyebrow" id="eyebrow">Ședința de dimineață</div>
       <h1 id="dayTitle">Azi</h1>
     </div>
+    <div class="mhead m-only">
+      <button type="button" id="mSum" aria-label="Rezumat ședință"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M8 6h12M8 12h12M8 18h8M4 6h.01M4 12h.01M4 18h.01"/></svg></button>
+      <button type="button" id="mSearch" aria-label="Caută" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4"/></svg></button>
+      <button type="button" id="mMenu" class="acc" aria-label="Meniu"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
     <div class="daynav">
       <button class="icon-btn" id="prevDay" aria-label="Ziua anterioară">‹</button>
       <button class="icon-btn" id="todayBtn">Azi</button>
@@ -475,6 +598,8 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
     <button class="tab" role="tab" id="tabDone" aria-selected="false">Finalizate</button>
   </div>
 
+  <div class="mweek m-only" id="mweek" aria-label="Săptămâna"></div>
+  <div class="mprog m-only" id="mprog"></div>
   <div id="summaryBox" class="summary" hidden></div>
 
   <div id="viewSearch" hidden></div>
@@ -523,6 +648,18 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
  </div>
 
  <aside class="rcol" aria-label="Calendar și rezumat">
+  <div id="mmenu" class="m-only">
+   <h2 class="mtitle">Meniu</h2>
+   <div class="mrows">
+    <button type="button" data-mnav="recurente"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/></svg>Activități recurente<span class="v" id="mnRec"></span></button>
+    <button type="button" data-mnav="finalizate"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/></svg>Finalizate<span class="v" id="mnFin"></span></button>
+   </div>
+   <div class="mrows">
+    <button type="button" data-mnav="statistici"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Pariuri · Statistici</button>
+    <button type="button" data-mnav="notite"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M6 3h9l5 5v13H6zM14 3v6h6"/></svg>Pariuri · Notițe echipe</button>
+    <button type="button" data-mnav="bani"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 7h18v12H3zM3 11h18M16 15h2"/></svg>Pariuri · Bani</button>
+   </div>
+  </div>
   <div class="panel box" id="calBox"></div>
   <div class="panel box" id="weekBox"></div>
   <section class="panel box" id="secIssues"></section>
@@ -662,7 +799,8 @@ function taskHTML(t,ctx,idx,len){
   const title=editing===t.id
     ?`<input class="title-edit" id="edit-${t.id}" data-edit="${t.id}" value="${esc(t.title)}" aria-label="Editează activitatea">`
     :`<span class="title" data-act="edit" data-id="${t.id}" title="Click pentru a edita">${esc(t.title)}</span>`;
-  const meta=[lateTag,fromBack,sched,rec,moved].join("");
+  const mpin=t.pinned?`<span class="tag m-only" style="color:var(--accent)">● fixată</span>`:"";
+  const meta=[mpin,lateTag,fromBack,sched,rec,moved].join("");
   const seg=ctx==="later"
     ?`<button class="ghost" data-act="totoday" data-id="${t.id}">Pe azi</button>`
     :`<div class="seg" role="group" aria-label="Status">
@@ -685,13 +823,14 @@ function taskHTML(t,ctx,idx,len){
     </div>`:"";
   return `<li class="task st-${t.status} ${ctx==="late"?"is-late":""} ${movable?"has-move":""}" ${movable?`data-list="${ctx}" data-id="${t.id}" data-pin="${t.pinned?1:0}"`:""}>
     ${mv}
+    <button type="button" class="mck m-only" data-act="${ctx==="later"?"totoday":"cycle"}" data-id="${t.id}" aria-label="${ctx==="later"?"Pune pe azi":"Schimbă statusul"}">${t.status==="done"?'<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></svg>':""}</button>
     <div class="main">${t.pinned?`<span class="pin-flag"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M16 3a1 1 0 0 1 .7 1.7L15 6.4v4.2l2.7 2.7a1 1 0 0 1-.7 1.7h-4v5.5a1 1 0 0 1-2 0V15H7a1 1 0 0 1-.7-1.7L9 10.6V6.4L7.3 4.7A1 1 0 0 1 8 3h8z"/></svg>Fixată sus</span>`:""}${title}${meta?`<div class="meta">${meta}</div>`:""}${noteView}</div>
     <div class="actions">${seg}
       ${ctx!=="later"?`<button class="mini pinbtn ${t.pinned?"on":""}" data-act="pin" data-id="${t.id}" aria-pressed="${!!t.pinned}" title="${t.pinned?"Anulează fixarea":"Fixează sus"}"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M16 3a1 1 0 0 1 .7 1.7L15 6.4v4.2l2.7 2.7a1 1 0 0 1-.7 1.7h-4v5.5a1 1 0 0 1-2 0V15H7a1 1 0 0 1-.7-1.7L9 10.6V6.4L7.3 4.7A1 1 0 0 1 8 3h8z"/></svg>${t.pinned?"Fixată":"Fixează"}</button>`:""}
       <button class="mini ${t.note?"has-note":""}" data-act="note" data-id="${t.id}">${t.note?"Observații •":"Observații"}</button>
       ${t.status!=="done"&&ctx!=="later"?`<button class="mini" data-act="ppopen" data-id="${t.id}">Altă dată</button>`:""}
       <button class="mini" data-act="del" data-id="${t.id}" aria-label="Șterge">Șterge</button>
-    </div>${noteEdit}${pp}</li>`;
+    </div><button type="button" class="mmore m-only" data-act="more" data-id="${t.id}" aria-label="Mai multe pentru ${esc(t.title)}">⋯</button>${noteEdit}${pp}</li>`;
 }
 function sec(el,title,count,inner,emptyText){
   el.innerHTML=`<div class="sec-head"><h2>${title}</h2><span class="count">${count}</span></div>`+(inner||`<div class="empty">${emptyText}</div>`);
@@ -700,7 +839,7 @@ function render(){
   if(drag&&drag.on)return;
   const isToday=view===today();
   $("eyebrow").textContent=isToday?"Ședința de dimineață · azi":(view<today()?"Istoric":"Planificare");
-  $("dayTitle").textContent=longDate(view).replace(/^./,c=>c.toUpperCase());
+  $("dayTitle").textContent=(isMob()?longDate(view).replace(/ (\S{3})\S*$/," $1"):longDate(view)).replace(/^./,c=>c.toUpperCase());
   $("todayBtn").disabled=isToday;
   $("tabDay").setAttribute("aria-selected",tab==="day");$("tabRec").setAttribute("aria-selected",tab==="rec");$("tabDone").setAttribute("aria-selected",tab==="done");
   $("viewDone").hidden=tab!=="done"||!!q;if(tab==="done"&&!q)renderDone();
@@ -753,7 +892,7 @@ function render(){
       <button class="mini" data-act="rdel" data-id="${r.id}">Șterge</button></li>`).join("")}</ul>`:"",
     "Nicio recurentă încă. Adaugă mai sus ce faci zilnic sau săptămânal: apar automat în lista zilei.");
 
-  renderCal();renderWeek();
+  renderCal();renderWeek();renderMob();
   const setN=(id,v)=>{const el=$(id);if(el)el.textContent=v?String(v):""};
   const tl=dayLists(today());
   setN("nAzi",tl.day.filter(t=>t.status!=="done").length+tl.late.length);
@@ -836,6 +975,71 @@ function renderDone(){
   </section>`;
 }
 
+/* ---------- telefon ---------- */
+const isMob=()=>matchMedia("(max-width:859px)").matches;
+const setMV=v=>{document.documentElement.dataset.mv=v};
+let sheet=null;
+function renderMob(){
+  const dow=(parse(view).getDay()+6)%7,ws=addDays(view,-dow);let w="";
+  for(let i=0;i<7;i++){const d=addDays(ws,i),st=dayStatus(d);
+    w+=`<button type="button" data-act="cal" data-date="${d}" class="${d===view?"on":""} ${d===today()?"tdy":""}" ${st?`data-s="${st}"`:""} aria-label="${longDate(d)}"><span>${DSHORT[parse(d).getDay()]}</span><b>${parse(d).getDate()}</b><i></i></button>`}
+  $("mweek").innerHTML=w;
+  const {late,day}=dayLists(view),all=[...late,...day],n=all.length,dn=all.filter(t=>t.status==="done").length,dg=all.filter(t=>t.status==="doing").length;
+  $("mprog").innerHTML=n?`<div class="bar"><span style="width:${dn/n*100}%;background:var(--done)"></span><span style="width:${dg/n*100}%;background:var(--doing)"></span></div><span>${dn}/${n} gata</span>`:`<span>Nimic planificat pentru ziua asta</span>`;
+  const tl=dayLists(today()),setT=(id,v)=>{const el=$(id);if(el)el.textContent=v?String(v):""};
+  setT("mbAzi",tl.day.filter(t=>t.status!=="done").length+tl.late.length);
+  setT("mbNote",state.issues.filter(i=>!i.resolved).length+state.notes.length);
+  setT("mnRec",state.recurring.length);setT("mnFin",state.tasks.filter(t=>t.status==="done").length);
+  if(sheet)renderSheet();
+}
+function openSheet(type,id){sheet={type,id,d:view,pin:false,move:false};renderSheet();$("mscrim").hidden=false;$("msheet").hidden=false;
+  if(type==="add"){const i=$("maddInput");if(i)i.focus()}}
+function closeSheet(){sheet=null;$("mscrim").hidden=true;$("msheet").hidden=true;$("msheet").innerHTML=""}
+const IC={note:'<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v12H8l-4 4z"/></svg>',edit:'<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M16 3l5 5-9 9-5 1 1-5zM3 21h18"/></svg>',pin:'<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 17v5M8 3h8l-1 6 3 4H6l3-4z"/></svg>',cal:'<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M8 2v4M16 2v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>',trash:'<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',today:'<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>'};
+function renderSheet(){
+  const el=$("msheet");
+  if(sheet.type==="add"){
+    if($("maddForm"))return updAddChips();
+    const tm=addDays(today(),1);
+    el.innerHTML=`<div class="grab"></div><div class="sh-t">Activitate nouă</div>
+      <form id="maddForm"><input class="minp" id="maddInput" type="text" placeholder="Ce ai de făcut?" autocomplete="off" aria-label="Activitate nouă">
+      <div class="chips2"><button type="button" data-act="mday" data-d="${today()}" id="mdToday">Azi</button><button type="button" data-act="mday" data-d="${tm}" id="mdTom">Mâine</button>
+      <label id="mdOther">Altă zi <input type="date" id="maddDate" aria-label="Alege ziua"></label>
+      <button type="button" data-act="mpin" id="mdPin" aria-pressed="false">Fixează</button><button type="button" data-act="mrec">↻ Recurentă</button></div>
+      <button class="primary big" type="submit">Adaugă</button></form>`;
+    $("maddDate").addEventListener("change",e=>{if(e.target.value){sheet.d=e.target.value;updAddChips()}});
+    return updAddChips();
+  }
+  const t=find(sheet.id);if(!t){closeSheet();return}
+  const later=t.status==="later";
+  el.innerHTML=`<div class="grab"></div><div class="sh-t">${esc(t.title)}</div>${t.note?`<div class="note">${esc(t.note)}</div>`:""}
+    ${later?`<button type="button" class="primary big" data-act="totoday" data-id="${t.id}">Pune pe azi</button>`:`<div class="seg3" role="group" aria-label="Status">${[["todo","De făcut"],["doing","În lucru"],["done","Gata"]].map(([k,l])=>`<button type="button" class="s-${k}" data-act="st" data-s="${k}" data-id="${t.id}" aria-pressed="${t.status===k}">${l}</button>`).join("")}</div>`}
+    <div class="srows">
+      <button type="button" data-act="msnote" data-id="${t.id}">${IC.note}Observații<span class="v">${t.note?"1":""}</span></button>
+      <button type="button" data-act="msedit" data-id="${t.id}">${IC.edit}Redenumește</button>
+      ${later?"":`<button type="button" data-act="pin" data-id="${t.id}">${IC.pin}${t.pinned?"Anulează fixarea":"Fixează sus"}<span class="v">${t.pinned?"activ":""}</span></button>`}
+      ${t.status!=="done"&&!later?`<button type="button" data-act="msmove" data-id="${t.id}">${IC.cal}Mută pe altă zi<span class="v">${sheet.move?"⌄":"›"}</span></button>
+        ${sheet.move?`<div class="sub"><button type="button" data-act="pp" data-to="${nextWork(today())}" data-id="${t.id}">Ziua lucrătoare următoare</button>
+          <label>Altă zi <input type="date" id="ppd-${t.id}" min="${addDays(today(),1)}" aria-label="Alege data"></label><button type="button" data-act="ppdate" data-id="${t.id}">Mută</button>
+          <button type="button" data-act="pp" data-to="" data-id="${t.id}">Fără dată</button></div>`:""}`:""}
+      <button type="button" class="del" data-act="del" data-id="${t.id}">${IC.trash}Șterge</button>
+    </div>`;
+}
+function updAddChips(){
+  const tm=addDays(today(),1),d=sheet.d;
+  $("mdToday").setAttribute("aria-pressed",d===today());$("mdTom").setAttribute("aria-pressed",d===tm);
+  const o=$("mdOther");o.setAttribute("aria-pressed",d!==today()&&d!==tm);if(d!==today()&&d!==tm)$("maddDate").value=d;
+  $("mdPin").setAttribute("aria-pressed",!!sheet.pin);
+}
+$("mscrim").addEventListener("click",closeSheet);
+try{matchMedia("(max-width:859px)").addEventListener("change",()=>{if(!isMob())closeSheet();render()})}catch(e){}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&sheet)closeSheet()});
+document.addEventListener("m-add",()=>openSheet("add"));
+$("mSum").onclick=()=>{$("summaryBtn").click();if(!$("summaryBox").hidden)$("summaryBox").scrollIntoView({block:"start",behavior:"smooth"})};
+$("mSearch").onclick=()=>{const on=!document.documentElement.classList.contains("msearch");document.documentElement.classList.toggle("msearch",on);$("mSearch").setAttribute("aria-pressed",on);
+  if(on){$("searchInput").focus()}else{$("searchInput").value="";q="";render()}};
+$("mMenu").onclick=()=>{setMV(document.documentElement.dataset.mv==="menu"?"azi":"menu");scrollTo(0,0)};
+
 /* ---------- rezumat ---------- */
 function summaryText(){
   const d=view, prev=prevWork(d);
@@ -870,9 +1074,19 @@ function commit(){persist();render()}
 document.addEventListener("click",e=>{
   const b=e.target.closest("[data-act]");if(!b)return;
   const act=b.dataset.act,id=b.dataset.id,t=id&&find(id);
+  if(sheet&&b.closest("#msheet")&&["pp","totoday","del"].includes(act))closeSheet();
+  if(act==="cal"||act==="goto")setMV("azi");
   switch(act){
     case "st": if(t){setStatus(t,b.dataset.s);commit()}break;
-    case "edit": editing=id;render();break;
+    case "edit": if(isMob()){openSheet("task",id);break}editing=id;render();break;
+    case "more": openSheet("task",id);break;
+    case "cycle": if(t){setStatus(t,{todo:"doing",doing:"done",done:"todo"}[t.status]||"todo");commit()}break;
+    case "msnote": closeSheet();openNote=id;openPostpone=null;render();{const ta=$("note-"+id);if(ta){ta.scrollIntoView({block:"center"});ta.focus()}}break;
+    case "msedit": closeSheet();editing=id;render();{const el=$("edit-"+id);if(el)el.scrollIntoView({block:"center"})}break;
+    case "msmove": sheet.move=!sheet.move;renderSheet();break;
+    case "mday": sheet.d=b.dataset.d;updAddChips();break;
+    case "mpin": sheet.pin=!sheet.pin;updAddChips();break;
+    case "mrec": {const v=($("maddInput").value||"").trim();closeSheet();setMV("azi");tab="rec";render();$("recInput").value=v;$("recInput").focus();break}
     case "drange": doneRange=b.dataset.r;renderDone();break;
     case "reopen": if(t){const prev={status:t.status,doneOn:t.doneOn,date:t.date};t.status="todo";delete t.doneOn;t.date=today();commit();toast("Mutată înapoi pe azi, la De făcut",()=>{Object.assign(t,prev);commit()})}break;
     case "cal": view=b.dataset.date;tab="day";openPostpone=null;calMonth=view.slice(0,7);render();break;
@@ -884,7 +1098,7 @@ document.addEventListener("click",e=>{
     case "ppopen": openPostpone=openPostpone===id?null:id;render();break;
     case "ppclose": openPostpone=null;render();break;
     case "pp": if(t){if(b.dataset.to){t.date=b.dataset.to;t.status="todo"}else{t.status="later";t.date=null}t.postponed=(t.postponed||0)+1;delete t.doneOn;openPostpone=null;toast(b.dataset.to?"Mutată pe "+shortDate(b.dataset.to):"Mutată la Altă dată");commit()}break;
-    case "ppdate": {const v=$("ppd-"+id).value;if(t&&v){t.date=v;t.status="todo";t.postponed=(t.postponed||0)+1;openPostpone=null;toast("Mutată pe "+shortDate(v));commit()}else $("ppd-"+id).focus();break}
+    case "ppdate": {const v=$("ppd-"+id).value;if(t&&v){if(sheet)closeSheet();t.date=v;t.status="todo";t.postponed=(t.postponed||0)+1;openPostpone=null;toast("Mutată pe "+shortDate(v));commit()}else $("ppd-"+id).focus();break}
     case "totoday": if(t){t.status="todo";t.date=today();commit()}break;
     case "del": if(t){const i=state.tasks.indexOf(t);state.tasks.splice(i,1);commit();toast("Activitate ștearsă",()=>{state.tasks.splice(i,0,t);commit()})}break;
     case "iss": {const x=state.issues.find(i=>i.id===id);if(x){x.resolved=!x.resolved;x.resolvedOn=x.resolved?today():null;commit()}break}
@@ -923,6 +1137,9 @@ document.addEventListener("submit",e=>{
     const d=$("addDate").value||view;const nt={id:uid(),title:v,date:d,status:"todo",createdAt:Date.now(),ord:nextOrd()};
     if(addPinned)nt.pinned=true;state.tasks.push(nt);$("addInput").value="";addPinned=false;
     if(d!==view)toast("Adăugată pe "+shortDate(d));commit();$("addInput").focus()}
+  if(e.target.id==="maddForm"){const v=$("maddInput").value.trim();if(!v){$("maddInput").focus();return}
+    const nt={id:uid(),title:v,date:sheet.d||view,status:"todo",createdAt:Date.now(),ord:nextOrd()};if(sheet.pin)nt.pinned=true;
+    state.tasks.push(nt);const d=nt.date;closeSheet();if(d!==view)toast("Adăugată pe "+shortDate(d));commit()}
   if(e.target.id==="noteForm"){const v=$("noteInput").value.trim();if(!v)return;
     state.notes.push({id:uid(),text:v,date:today()});commit();$("noteInput").focus()}
   if(e.target.id==="issForm"){const v=$("issInput").value.trim();if(!v)return;
@@ -953,8 +1170,15 @@ let drag=null,suppressClick=false;
 document.addEventListener("pointerdown",e=>{
   if(e.button!==0)return;
   const li=e.target.closest("li.task[data-list]");if(!li||editing||openNote)return;
-  const onGrip=!!e.target.closest(".grip");
-  if(!onGrip&&(e.pointerType!=="mouse"||e.target.closest("button,input,textarea,label,select,a")))return;
+  const onGrip=!!e.target.closest(".grip"),blocked=!!e.target.closest("button,input,textarea,label,select,a");
+  if(e.pointerType!=="mouse"&&!onGrip){
+    /* pe telefon: ții apăsat ~0,4 s pe cartonaș, apoi tragi */
+    if(blocked||!isMob())return;
+    drag={li,ul:li.parentElement,id:li.dataset.id,list:li.dataset.list,startY:e.clientY,y:e.clientY,x0:e.clientX,on:false,pid:e.pointerId,lp:true,ready:false};
+    const d=drag;d.timer=setTimeout(()=>{if(drag===d){d.ready=true;d.startY=d.y;li.classList.add("lp");try{navigator.vibrate&&navigator.vibrate(12)}catch(err){}}},380);
+    return;
+  }
+  if(!onGrip&&blocked)return;
   drag={li,ul:li.parentElement,id:li.dataset.id,list:li.dataset.list,startY:e.clientY,y:e.clientY,on:false,pid:e.pointerId};
 });
 function dragStep(){
@@ -969,6 +1193,7 @@ function dragStep(){
 }
 document.addEventListener("pointermove",e=>{
   if(!drag||e.pointerId!==drag.pid)return;
+  if(drag.lp&&!drag.ready){if(Math.abs(e.clientY-drag.startY)>8||Math.abs(e.clientX-drag.x0)>8){clearTimeout(drag.timer);drag=null}return}
   drag.y=e.clientY;
   if(!drag.on){if(Math.abs(drag.y-drag.startY)<6)return;
     drag.on=true;drag.li.classList.add("dragging");document.body.classList.add("is-dragging");
@@ -981,7 +1206,8 @@ document.addEventListener("pointermove",e=>{
 },{passive:false});
 function endDrag(e){
   if(!drag||(e&&e.pointerId!==drag.pid))return;
-  const d=drag;drag=null;
+  const d=drag;drag=null;clearTimeout(d.timer);d.li.classList.remove("lp");
+  if(d.lp&&d.ready&&!d.on){suppressClick=true;setTimeout(()=>suppressClick=false,0);return}
   if(!d.on)return;
   document.body.classList.remove("is-dragging");d.li.classList.remove("dragging");d.li.style.transform="";
   suppressClick=true;setTimeout(()=>suppressClick=false,0);
@@ -991,6 +1217,8 @@ function endDrag(e){
   if(changed)commit();else render();
 }
 document.addEventListener("pointerup",endDrag);
+document.addEventListener("touchmove",e=>{if(drag&&drag.lp&&drag.ready)e.preventDefault()},{passive:false});
+document.addEventListener("contextmenu",e=>{if(drag&&drag.lp)e.preventDefault()});
 document.addEventListener("pointercancel",endDrag);
 document.addEventListener("click",e=>{if(suppressClick){e.stopPropagation();e.preventDefault();suppressClick=false}},true);
 document.addEventListener("keydown",e=>{
@@ -1651,6 +1879,29 @@ document.addEventListener("bt-reload",()=>{bets=lsGet(LSB,[]);settings={...setti
   ["app","btApp"].forEach(id=>mo.observe($(id),{attributes:true,attributeFilter:["hidden"]}));
   ["tabRec","tabDay","tabDone","btTabBets","btTabStats","btTabNotes","btTabMoney"].forEach(id=>mo.observe($(id),{attributes:true,attributeFilter:["aria-selected"]}));
   mo.observe($("swBetBadge"),{attributes:true,childList:true,characterData:true,subtree:true});
+  /* telefon: bara de jos și meniul */
+  const root=document.documentElement;if(!root.dataset.mv)root.dataset.mv="azi";
+  const nav=k=>{const b=document.querySelector(`.nav[data-nav="${k}"]`);if(b)b.click()};
+  document.querySelectorAll("[data-mb]").forEach(b=>b.addEventListener("click",()=>{
+    const k=b.dataset.mb;
+    if(k==="add"){if(!$("btApp").hidden)$("btFab").click();else document.dispatchEvent(new Event("m-add"));return}
+    if(k==="note"){$("swAct").click();root.dataset.mv="note";scrollTo(0,0);msync();return}
+    root.dataset.mv="azi";
+    nav(k==="pariuri"?"bilete":k);
+  }));
+  document.querySelectorAll("[data-mnav]").forEach(b=>b.addEventListener("click",()=>{root.dataset.mv="azi";nav(b.dataset.mnav)}));
+  function msync(){
+    const mv=root.dataset.mv;let c="";
+    if(mv==="note")c="note";else if(mv!=="menu"){const cur=current();c=["bilete","statistici","notite","bani"].includes(cur)?"pariuri":cur==="finalizate"?"finalizate":cur==="azi"?"azi":""}
+    document.querySelectorAll("[data-mb]").forEach(b=>{if(b.dataset.mb===c)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
+    const badge=$("swBetBadge"),n=$("mbBil");if(n)n.textContent=badge&&!badge.hidden?badge.textContent:"";
+  }
+  new MutationObserver(msync).observe(root,{attributes:true,attributeFilter:["data-mv"]});
+  new MutationObserver(msync).observe($("btApp"),{attributes:true,attributeFilter:["hidden"]});
+  ["tabRec","tabDay","tabDone"].forEach(id=>new MutationObserver(msync).observe($(id),{attributes:true,attributeFilter:["aria-selected"]}));
+  /* când treci în Pariuri, vederea de telefon revine la conținut */
+  new MutationObserver(()=>{if(!$("btApp").hidden&&root.dataset.mv!=="azi")root.dataset.mv="azi"}).observe($("btApp"),{attributes:true,attributeFilter:["hidden"]});
+  msync();
   sync();
 })();
 </script>

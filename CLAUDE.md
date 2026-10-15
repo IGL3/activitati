@@ -3,7 +3,10 @@
 Tracker personal pentru ședința zilnică de dimineață (UI în limba română).
 Aspect: `.shell` = meniu fix în stânga (`.side`: căutare, navigație `.nav[data-nav]`, temă, cont/sincronizare) + `main.content`.
 În `#app` (Activități): `.maincol` (antet, compunere, linie de timp `.tl` cu restanțe/azi/altă dată) + `.rcol` (calendar `#calBox`, „Pe scurt” `#weekBox`, `#secIssues`, `#secNotes`).
-Pe telefon (<860px) `.side` are `display:contents`: meniul devine un rând de butoane lipit sus, tema și contul ajung la final.
+Pe telefon (<860px) aspect de aplicație, doar din CSS + elemente `.m-only` (ascunse pe calculator):
+cartonașe compacte (cerc `.mck` = schimbă statusul, `⋯` `.mmore` = foaie de acțiuni `#msheet`), săptămâna `#mweek` + bara de progres `#mprog` sus,
+bara de jos `#mbar` (Azi, Finalizate, + , Note, Pariuri), vederi prin `html[data-mv="azi"|"note"|"menu"]` (Note = probleme+observații, Meniu = `#mmenu` + calendar + temă/cont).
+Ordinea se schimbă ținând apăsat ~0,4 s pe cartonaș și trăgând. Calculatorul NU trebuie să se schimbe când modifici telefonul.
 Comutarea între aplicații folosește încă butoanele ascunse `#swAct`/`#swBet` și taburile `#tabDay`/`#tabRec`/`#btTab*`; meniul din stânga doar le apasă (script la final).
 Sunt două aplicații: **Activități** (`#app`) și **Pariuri** (jurnal de pariuri fotbal, `#btApp`, clase/id-uri cu prefix `bt`).
 Pariurile: în Claude stau în `data/users/<id>/betdata/bets` și `data/users/<id>/betsettings`; pe GitHub Pages în localStorage (`bt-bets`, `bt-settings`) și intră în backup sub cheia `pariuri`.
