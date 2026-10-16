@@ -17,6 +17,7 @@ Pariurile: în Claude stau în `data/users/<id>/betdata/bets` și `data/users/<i
   Stocare: doc `data/users/<id>/betnotes` = `{notes:{"RO|FCSB":{items:[{id,t,u}]}}}` (formatul vechi `{t,u}` e convertit de `normNotes`); local `bt-notes`; intră în backup ca `pariuri.notite`.
 - Sub-tabul **Bani**: depuneri, bonusuri, retrageri. Colecția `data/users/<id>/betdata/txns` ({type:dep|bonus|ret, amount, date, book, note}); local `bt-txns`; backup `pariuri.tranzactii`.
   Bankroll curent = bankroll inițial + depuneri + bonusuri − retrageri + profit pariuri − mize în așteptare.
+- **Pe zile**: în Statistici, cardul „Pe zile” (profit, câștigate/pierdute, mizat pe fiecare zi, total perioadă); în lista de pariuri, încheiatele sunt grupate pe zile cu profitul zilei (`dayGroups`, `dailyCard`).
 - Butonul **Export**: alege luna → „Copiază pentru Claude” (CSV cu `;` + bankroll, de lipit în chat pentru analiză) sau, pe GitHub, descarcă CSV (Excel, zecimale cu virgulă).
 
 ## Lipește bilet (tab Pariuri)

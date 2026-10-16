@@ -463,6 +463,9 @@ body.is-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .bt-note .txt{font-size:14px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
 .bt-form{display:flex;flex-direction:column;gap:12px}
 .bt-note-act{display:flex;gap:14px}
+.bt-day{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;color:var(--muted);padding:6px 2px 0;border-top:1px solid var(--line);margin-top:4px}
+.bt-day b{font-family:var(--f-display);font-size:15px;font-weight:600;color:var(--ink)}
+.bt-day b.pos{color:var(--done)} .bt-day b.neg{color:var(--late)}
 .bt-tx .l1{align-items:center}
 .bt-stat2 .v.pos{color:var(--done)} .bt-stat2 .v.neg{color:var(--late)}
 .bt-del{color:var(--late)}
@@ -1432,9 +1435,29 @@ function renderBets(view){
   const el=$("btViewBets");
   if(!view.length){el.innerHTML='<div class="bt-empty"><strong>Niciun pariu încă.</strong><br>Apasă „+ Pariu” ca să adaugi primul. Statisticile se calculează singure.</div>';return}
   const pend=view.filter(b=>b.result==="pending"),done=view.filter(settled);
-  el.innerHTML=(pend.length?`<div class="bt-group">În așteptare · ${pend.length}</div>`+pend.map(slip).join(""):"")+(done.length?`<div class="bt-group">Încheiate · ${done.length}</div>`+done.map(slip).join(""):"");
+  el.innerHTML=(pend.length?`<div class="bt-group">În așteptare · ${pend.length}</div>`+pend.map(slip).join(""):"")+
+    (done.length?`<div class="bt-group">Încheiate · ${done.length}</div>`+dayGroups(done).map(g=>`<div class="bt-day"><span>${dayLabel(g.d)} · ${g.list.length} ${g.list.length===1?"pariu":"pariuri"}</span><b class="${g.s.profit>0?"pos":g.s.profit<0?"neg":""}">${fmt(g.s.profit,true)}</b></div>`+g.list.map(slip).join("")).join(""):"");
   el.querySelectorAll(".bt-slip").forEach(x=>x.onclick=()=>openSheet(bets.find(b=>b.id===x.dataset.bid)));
   el.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>quickSettle(x.dataset.bid,x.dataset.q));
+}
+/* situația pe zile */
+const WD=["Duminică","Luni","Marți","Miercuri","Joi","Vineri","Sâmbătă"],MS=["ian","feb","mar","apr","mai","iun","iul","aug","sep","oct","nov","dec"];
+function dayLabel(d){if(!d)return"Fără dată";const [y,m,dd]=d.split("-").map(Number),t=new Date(y,m-1,dd);
+  const diff=Math.round((new Date(today())-new Date(d))/864e5);
+  return (diff===0?"Azi":diff===1?"Ieri":WD[t.getDay()])+", "+dd+" "+MS[m-1]+(y!==new Date().getFullYear()?" "+y:"")}
+function dayGroups(list){const m={};list.forEach(b=>{(m[b.date||""]=m[b.date||""]||[]).push(b)});
+  return Object.keys(m).sort().reverse().map(d=>({d,list:m[d],s:summarize(m[d])}))}
+function dailyCard(view){
+  const gs=dayGroups(view.filter(settled));if(!gs.length)return"";
+  const mx=Math.max(...gs.map(g=>Math.abs(g.s.profit)),1),tot=gs.reduce((a,g)=>a+g.s.profit,0),plus=gs.filter(g=>g.s.profit>0).length;
+  return `<div class="bt-card"><div class="bt-row"><h2>Pe zile</h2><span class="bt-hint">${plus} din ${gs.length} zile pe plus</span></div><div class="bt-brk">${gs.map(g=>{
+    const c=r=>g.list.filter(b=>b.result===r).length,w=Math.abs(g.s.profit)/mx*50,pos=g.s.profit>=0;
+    const w2=(k,a,b)=>c(k)&&c(k)+" "+(c(k)===1?a:b);
+    const parts=[w2("won","câștigat","câștigate"),w2("lost","pierdut","pierdute"),w2("cashout","cashout","cashout"),w2("void","anulat","anulate")].filter(Boolean).join(" · ");
+    return `<div class="bt-brow"><span class="n">${dayLabel(g.d)}</span><span class="bt-pl ${g.s.profit>0?"pos":g.s.profit<0?"neg":""}" style="font-size:16px">${fmt(g.s.profit,true)}</span>
+    <span class="bt-bar"><i style="background:var(${pos?"--done":"--late"});${pos?`left:50%;width:${w}%`:`right:50%;width:${w}%`}"></i></span>
+    <span class="meta">${parts} · mizat ${fmt(g.s.staked)}</span></div>`}).join("")}</div>
+    <div class="bt-row" style="border-top:1px solid var(--line);padding-top:8px"><span class="bt-hint">Total perioadă</span><b class="bt-pl ${tot>0?"pos":tot<0?"neg":""}" style="font-size:16px">${fmt(tot,true)}</b></div></div>`;
 }
 function breakdown(view,key,title){
   const m={};view.filter(settled).forEach(b=>{const k=(b[key]||"").trim()||"Nespecificat";(m[k]=m[k]||[]).push(b)});
@@ -1459,7 +1482,7 @@ function renderStats(view,s){
     <div><span class="lbl">Cea mai lungă serie −</span><span class="v">${maxL}</span></div>
     <div><span class="lbl">Bani în joc acum</span><span class="v">${fmt(pend)}</span></div>
     <div><span class="lbl">Cel mai bun pariu</span><span class="v">${best?fmt(profit(best),true):"–"}</span></div>
-  </div></div>`+breakdown(view,"market","Pe tip de pariu")+breakdown(view,"comp","Pe competiție")+breakdown(view,"book","Pe casă de pariuri");
+  </div></div>`+dailyCard(view)+breakdown(view,"market","Pe tip de pariu")+breakdown(view,"comp","Pe competiție")+breakdown(view,"book","Pe casă de pariuri");
 }
 
 /* formular */
